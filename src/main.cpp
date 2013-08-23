@@ -15,12 +15,12 @@ int main()
 {
 	srand ( time(NULL) );
 	Graph<KuramotoOscillator, double> g;
-	KuramotoOscillator::simpleKuramotoNetwork(g, 2, 50);
+	KuramotoOscillator::simpleKuramotoNetwork(g, 5, 100);
     // create the window
     sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 	sf::View view(
 		sf::Vector2f(0.0, 0.0), 
-		sf::Vector2f(200, 150) );
+		sf::Vector2f(200,150) );
 	window.setView(view);
 	
     // run the program as long as the window is open
@@ -37,18 +37,19 @@ int main()
 
         	// clear the window with black color
         	window.clear(sf::Color::Black);
-			for (int i = 0; i < 2; ++i) {
+			for (int i = 0; i < g.nodes.size(); ++i) {
 				sf::CircleShape sp(3);
-				sp.setPosition(5*i, g.nodes[i].phase);
+				sp.setPosition(7*i, 0); 
 	//			int color = (57.0 + g.nodes[i].phase)/114.00 * 255;
-				if (i) sp.setFillColor( sf::Color::Blue );
-				else sp.setFillColor( sf::Color::Red );
+				sp.setFillColor( sf::Color(255*g.nodes[i].phase/2*M_PI,
+					255*g.nodes[i].phase/2*M_PI,
+					255*g.nodes[i].phase/2*M_PI) );
 				window.draw(sp);
 			}
         	// end the current frame
         	window.display();
-			g.update();
-			sf::sleep( sf::seconds(0.5) );	
+			g.update(0.001);
+			sf::sleep( sf::seconds(0.1) );	
 		}
     }
 

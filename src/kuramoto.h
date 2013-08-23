@@ -6,7 +6,7 @@
 class KuramotoOscillator {
 public:
 	KuramotoOscillator(double w, double K, double phase, int N);
-	void computeStep(KuramotoOscillator &o);
+	void computeStep(KuramotoOscillator &o, double t);
 	void applyStep();
 	void normalize (double m, double M);
 	static void simpleKuramotoNetwork(

@@ -13,17 +13,17 @@ public:
 	std::vector<Oscillator>	nodes;
 	std::vector< std::vector<int> > adj;
 	// Applies all changes 
-	void update();
+	void update(double t);
 
 private:
 };
 
 template <class Oscillator, class Phase>
-void Graph<Oscillator, Phase>::update() {
+void Graph<Oscillator, Phase>::update(double t) {
 	Phase m, M;
 	for (int i = 0; i < nodes.size(); ++i) {
 		for (int j = 0; j < adj[i].size(); ++j)
-			nodes[i].computeStep(nodes[adj[i][j]]);
+			nodes[i].computeStep(nodes[adj[i][j]], t);
 	}
 	m = M = nodes[0].phase;
 	for (int i = 0; i < nodes.size(); ++i) {

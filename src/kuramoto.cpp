@@ -12,7 +12,10 @@ KuramotoOscillator::KuramotoOscillator(double w, double k, double phase, int N) 
 }
 
 void KuramotoOscillator::applyStep () {
-	phase += delta;
+	phase += delta;	
+	while (phase >= 2*M_PI) phase -= 2*M_PI;
+	while (phase < -2*M_PI) phase += 2*M_PI;
+	if (phase < 0) phase += 2*M_PI;
 	delta = w;
 }
 
@@ -20,7 +23,7 @@ void KuramotoOscillator::normalize (double min, double max) {
 	phase = (phase-min)/(max-min);
 }
 
-void KuramotoOscillator::computeStep(KuramotoOscillator& o) {
+void KuramotoOscillator::computeStep(KuramotoOscillator& o, double t) {
 	delta += (double) K/N * sin(phase - o.phase);
 }
 
