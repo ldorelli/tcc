@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string>
+#include <SFML/Graphics.hpp>
 #include "util.hpp"
 
 using namespace std;
@@ -38,7 +39,7 @@ public:
 
 		size = igraph_vector_size(&nid);
 		for (i = 0; i < size; i++) {
-			if (i == curr)	continue;
+			if (i == curr)	continue;	
 			next = (int)VECTOR(nid)[i];
 			sum += sin ((theta[next][theta[next].size()-1]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
 		}
@@ -54,7 +55,7 @@ public:
 	void calc (int n) {
 		int i, j, size;
 		vector<double> k0, k1, k2, k3, k4;
-		double h = 1e-4, ans, aa;
+		double h = 1e-1, ans, aa;
 		size = igraph_vcount (&graph);
 		k0 = vector<double> (size, 0);
 		for (i = 1; i <= n; i++) {
@@ -71,10 +72,10 @@ public:
 			for (j = 0; j < size; j++)
 				k4.push_back(f(j, k3, h));
 			for (j = 0; j < size; j++) {
-				ans = theta[j][i-1] + h/6*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
-				aa = fabs(ans)/(2*M_PI);
+				ans = theta[j][i-1] + (h/6.0)*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
+				aa = floor( fabs(ans)/(2*M_PI) );
 				if (ans < 0)	ans += aa+2*M_PI;
-				else	ans -= aa;
+				else	ans -= aa*2*M_PI;
 				theta[j].push_back (ans);
 			}
 		}
@@ -102,16 +103,48 @@ int main (void) {
 	srand(time(NULL));
 	theta.push_back(0);
 	theta.push_back(1);
+	theta.push_back(2.33);
 	omega.push_back(-0.5);
+	omega.push_back(1.20);
 	omega.push_back(0.3);
 	t0 = 0;
-	sigma = 0.5;
+	sigma = 0.01;
 	goku = Kakaroto (theta, t0, omega, sigma);
-	cerr << "plol" << endl;
 	Util::readGraph (&(goku.graph), 0, 0, fn.c_str());
-	cerr << "lala" << endl;
-	goku.calc(10000);
-		cerr << "lalal" << endl;
-	goku.print();
+	goku.calc(100000);
+	// goku.print();
+
+	sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+	sf::View view(
+		sf::Vector2f(0.0, 0.0), 
+		sf::Vector2f(200,150) );
+	
+	window.setView(view);
+
+	// run the program as long as the window is open    
+	for (int i = 0; i < 100000; ++i) {
+    	sf::Event event;
+    	while (window.pollEvent(event))
+    	{
+        	// "close requested" event: we close the window
+        	if (event.type == sf::Event::Closed)
+            	window.close();
+    	}
+    	// clear the window with black color
+    	window.clear(sf::Color::Black);
+    	int size = igraph_vcount(&goku.graph);
+    	for (int j = 0; j < size; ++j) {
+    		double tt = goku.theta[j][i];
+    		sf::CircleShape sp(2);
+			sp.setPosition(-20+5*j, 0); 
+			sp.setFillColor( sf::Color(255*tt/(2*M_PI),
+				255*tt/(2*M_PI), 255*tt/(2*M_PI)) );
+			window.draw(sp);
+    	}
+    	window.display();
+    	sf::sleep( sf::seconds(0.00001) );	
+    }
+
+
 	return 0;
 }

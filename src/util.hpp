@@ -28,7 +28,7 @@ public:
 			case 1:
 				sscanf (param, "%d", &g_m);
 				cerr << "BA " << g_m << endl;
-				igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
+				//igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
 				break;
 			case 2:
 				sscanf (param, "%lf", &g_p);
@@ -38,12 +38,12 @@ public:
 			case 3:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "WS " << g_m << " " << g_p << endl;
-				igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
+				//igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
 				break;
 			case 4:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "NLBA " << g_m << " " << g_p << endl;
-				igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
+				//igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
 				break;
 		}
 	}
