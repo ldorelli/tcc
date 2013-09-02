@@ -1,5 +1,6 @@
 #include "igraph.h"
 #include <vector>
+#include <fstream>
 #include <stdlib.h>
 #include <time.h>
 #include <string>
@@ -16,7 +17,6 @@ public:
 	vector<double> omega;
 	double sigma;
 
-	//nao le o grafo
 
 	Kakaroto () {}
 
@@ -27,6 +27,30 @@ public:
 		t.push_back(_t0);
 		omega = _omega;
 		sigma = _sigma;
+	}
+
+	Kakaroto (string fn) {
+		string el = fn, conf = fn;
+		double _theta, _omega, _t0, _sigma;
+		int size;
+		ifstream file;
+		el.append(".el");
+		conf.append(".conf");
+		Util::readGraph (&graph, 0, 0, el.c_str());
+		file.open(conf.c_str());
+		file >> _t0 >> _sigma;
+		t.push_back(_t0);
+		sigma = _sigma;
+		while (file >> _theta >> _omega) {
+			theta.push_back(vector<double> ());
+			theta[theta.size()-1].push_back(_theta);
+			omega.push_back(_omega);
+		}
+		size = igraph_vcount(&graph);
+		cerr << size << theta.size() << endl;
+		file.close();
+		if (theta.size() != size)
+			throw "Graph and theta vector sizes differ.";
 	}
 
 	double f (int curr, vector<double> k, double coef) {
@@ -55,7 +79,7 @@ public:
 	void calc (int n) {
 		int i, j, size;
 		vector<double> k0, k1, k2, k3, k4;
-		double h = 1e-1, ans, aa;
+		double h = 1e-2, ans, aa;
 		size = igraph_vcount (&graph);
 		k0 = vector<double> (size, 0);
 		for (i = 1; i <= n; i++) {
@@ -90,6 +114,42 @@ public:
 			s[2]++;
 		}
 	}
+
+	void draw (void) {
+		double rho = 10;
+		
+		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+		sf::View view(
+			sf::Vector2f(0.0, 0.0), 
+			sf::Vector2f(200,150) );
+		
+		window.setView(view);
+
+		// run the program as long as the window is open    
+		for (int i = 0; i < theta[0].size() && window.isOpen(); ++i) {
+			sf::Event event;
+			while (window.pollEvent(event))
+			{
+				// "close requested" event: we close the window
+				if (event.type == sf::Event::Closed)
+					window.close();
+			}
+			// clear the window with black color
+			window.clear(sf::Color::Black);
+			int size = igraph_vcount(&graph);
+			for (int j = 0; j < size; ++j) {
+				double tt = theta[j][i];
+				sf::CircleShape sp(2);
+				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
+				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
+					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
+				//sp.setFillColor (sf::Color(255, 255, 255));
+				window.draw(sp);
+			}
+			window.display();
+			sf::sleep( sf::seconds(0.00001) );	
+		}
+	}
 };
 
 #include "util.hpp"
@@ -99,7 +159,10 @@ int main (void) {
 	Kakaroto goku;
 	vector<double> theta, omega;
 	double t0, sigma;
-	string fn = "../networks/teste.el";
+	string fn = "../networks/teste";
+	goku = Kakaroto(fn);
+/**	string fn = "../networks/teste.el";
+	
 	srand(time(NULL));
 	theta.push_back(0);
 	theta.push_back(1);
@@ -111,10 +174,9 @@ int main (void) {
 	sigma = 0.01;
 	goku = Kakaroto (theta, t0, omega, sigma);
 	Util::readGraph (&(goku.graph), 0, 0, fn.c_str());
-	goku.calc(100000);
 	// goku.print();
 
-	sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+/**	sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 	sf::View view(
 		sf::Vector2f(0.0, 0.0), 
 		sf::Vector2f(200,150) );
@@ -122,7 +184,7 @@ int main (void) {
 	window.setView(view);
 
 	// run the program as long as the window is open    
-	for (int i = 0; i < 100000; ++i) {
+	/**for (int i = 0; i < 100000; ++i) {
     	sf::Event event;
     	while (window.pollEvent(event))
     	{
@@ -143,7 +205,9 @@ int main (void) {
     	}
     	window.display();
     	sf::sleep( sf::seconds(0.00001) );	
-    }
+    }*/
+	goku.calc(100000);
+	goku.draw();
 
 
 	return 0;
