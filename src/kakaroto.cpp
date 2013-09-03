@@ -144,12 +144,22 @@ public:
 			// clear the window with black color
 			window.clear(sf::Color::Black);
 			int size = igraph_vcount(&graph);
-			for (int j = 0; j < size; ++j) {
+			int j;
+			for (j = 0; j < size-np; ++j) {
 				double tt = theta[j][i];
 				sf::CircleShape sp(2);
 				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
 				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
 					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
+				//sp.setFillColor (sf::Color(255, 255, 255));
+				window.draw(sp);
+			}
+			for (; j < size; ++j) {
+				double tt = theta[j][i];
+				sf::CircleShape sp(2);
+				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
+				sp.setFillColor( sf::Color(.0,
+					.0, 255*(j+1)/(double)(size+1)) );
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
