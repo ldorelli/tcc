@@ -16,31 +16,34 @@ public:
 	vector< double > t;
 	vector<double> omega;
 	double sigma;
+	int np;
 
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma) {
+	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, int _np) {
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
 		t.push_back(_t0);
 		omega = _omega;
 		sigma = _sigma;
+		np = _np;
 	}
 
 	Kakaroto (string fn) {
 		string el = fn, conf = fn;
 		double _theta, _omega, _t0, _sigma;
-		int size;
+		int size, _np;
 		ifstream file;
 		el.append(".el");
 		conf.append(".conf");
 		Util::readGraph (&graph, 0, 0, el.c_str());
 		file.open(conf.c_str());
-		file >> _t0 >> _sigma;
+		file >> _t0 >> _sigma >> _np;
 		t.push_back(_t0);
 		sigma = _sigma;
+		np = _np;
 		while (file >> _theta >> _omega) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
@@ -62,6 +65,10 @@ public:
 		igraph_neighbors(&graph, &nid, curr, IGRAPH_IN);
 
 		size = igraph_vector_size(&nid);
+
+		//pacemaker
+		if (curr >= size - np)	return omega[curr];
+
 		for (i = 0; i < size; i++) {
 			if (i == curr)	continue;	
 			next = (int)VECTOR(nid)[i];
