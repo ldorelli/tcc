@@ -178,7 +178,7 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
-			//printf("R: %.5lf\n", R[i]);
+			printf("R: %.5lf\n", R[i]);
 			window.display();
 			sf::sleep( sf::seconds(0.00001) );	
 		}
@@ -242,7 +242,7 @@ int main (void) {
 	goku.calc(100000);
 	goku.calcR();
 	goku.draw();
-
+	cout << goku.R.back() << endl;
 
 	return 0;
 }
