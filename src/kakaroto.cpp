@@ -14,7 +14,7 @@ public:
 	igraph_t graph;
 	vector< vector< double > > theta;
 	vector< double > t;
-	vector<double> omega;
+	vector<double> omega, R;
 	double sigma;
 	int np;
 
@@ -122,6 +122,20 @@ public:
 		}
 	}
 
+	void calcR() {
+		for (int i = 0; i < theta[0].size(); ++i) {
+			double r1 = 0.0;
+			double r2 = 0.0;
+//			r = (1/N^2)*([sum i=1^N cos(theta)]^2 + [sum i=1^N sin(theta)]^2)  23:20
+			for (int j = 0; j < theta.size(); ++j) {
+				r1 += cos(theta[j][i]), r2 += sin(theta[j][i]);
+			}
+			double r = r1*r1 + r2*r2;
+			cout << r << endl;
+			R.push_back(r/(theta.size()*theta.size()));
+		}
+	}
+
 	void draw (void) {
 		double rho = 10;
 		
@@ -163,6 +177,7 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
+			printf("R: %.5lf\n", R[i]);
 			window.display();
 			sf::sleep( sf::seconds(0.00001) );	
 		}
@@ -224,6 +239,7 @@ int main (void) {
     	sf::sleep( sf::seconds(0.00001) );	
     }*/
 	goku.calc(100000);
+	goku.calcR();
 	goku.draw();
 
 
