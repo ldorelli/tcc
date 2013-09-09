@@ -15,7 +15,7 @@ public:
 	vector< vector< double > > theta;
 	vector< double > t;
 	vector<double> omega, R;
-	double sigma;
+	double sigma, step;
 	int np;
 
 
@@ -33,17 +33,18 @@ public:
 
 	Kakaroto (string fn) {
 		string el = fn, conf = fn;
-		double _theta, _omega, _t0, _sigma;
+		double _theta, _omega, _t0, _sigma, _step;
 		int size, _np;
 		ifstream file;
 		el.append(".el");
 		conf.append(".conf");
 		Util::readGraph (&graph, 0, 0, el.c_str());
 		file.open(conf.c_str());
-		file >> _t0 >> _sigma >> _np;
+		file >> _t0 >> _sigma >> _np >> _step;
 		t.push_back(_t0);
 		sigma = _sigma;
 		np = _np;
+		step = _step;
 		while (file >> _theta >> _omega) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
@@ -86,7 +87,7 @@ public:
 	void calc (int n) {
 		int i, j, size;
 		vector<double> k0, k1, k2, k3, k4;
-		double h = 1e-2, ans, aa;
+		double  ans, aa;
 		size = igraph_vcount (&graph);
 		k0 = vector<double> (size, 0);
 		for (i = 1; i <= n; i++) {
@@ -97,13 +98,13 @@ public:
 			for (j = 0; j < size; j++)
 				k1.push_back(f(j, k0, 0));
 			for (j = 0; j < size; j++)
-				k2.push_back(f(j, k1, h/2));
+				k2.push_back(f(j, k1, step/2));
 			for (j = 0; j < size; j++)
-				k3.push_back(f(j, k2, h/2));
+				k3.push_back(f(j, k2, step/2));
 			for (j = 0; j < size; j++)
-				k4.push_back(f(j, k3, h));
+				k4.push_back(f(j, k3, step));
 			for (j = 0; j < size; j++) {
-				ans = theta[j][i-1] + (h/6.0)*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
+				ans = theta[j][i-1] + (step/6.0)*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
 				aa = floor( fabs(ans)/(2*M_PI) );
 				if (ans < 0)	ans += aa+2*M_PI;
 				else	ans -= aa*2*M_PI;
@@ -131,7 +132,7 @@ public:
 				r1 += cos(theta[j][i]), r2 += sin(theta[j][i]);
 			}
 			double r = r1*r1 + r2*r2;
-			cout << r << endl;
+		//	cout << r << endl;
 			R.push_back(r/(theta.size()*theta.size()));
 		}
 	}
@@ -177,7 +178,7 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
-			printf("R: %.5lf\n", R[i]);
+			//printf("R: %.5lf\n", R[i]);
 			window.display();
 			sf::sleep( sf::seconds(0.00001) );	
 		}
