@@ -197,7 +197,7 @@ public:
 				if (event.type == sf::Event::Closed)
 					window.close();
 			}
-			window.clear(sf::Color::White);
+			window.clear(sf::Color::Black);
 
 
 			int size = igraph_vcount(&graph);	
@@ -208,10 +208,10 @@ public:
 			vector<double> x(size), y(size);
 			for (int j = 0; j < size; ++j) {
 				double tt = theta[j][i];
-				x[j] = rho * cos(tt);
-				y[j] = rho * sin(tt);
-				// x[j] = rho * cos(angle);
-				// y[j] = rho * sin(angle);
+				// x[j] = rho * cos(tt);
+				// y[j] = rho * sin(tt);
+				x[j] = rho * cos(angle);
+				y[j] = rho * sin(angle);
 				angle += step;
 			}
 
