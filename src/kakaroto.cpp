@@ -41,7 +41,7 @@ public:
 		gr.append(".gr");
 		file.open(gr.c_str());
 		getline(file, line);
-		Util::readGraph (&graph, line, plo);
+		Util::readGraph (&graph, line.c_str());
 		getline(file, conf);
 		cout << conf << endl;
 		file.close();
@@ -246,57 +246,14 @@ public:
 #include "util.hpp"
 
 
-int main (void) {
+int main (int argc, char* argv[]) {
 	Kakaroto goku;
 	vector<double> theta, omega;
 	double t0, sigma;
-	string fn = "../networks/teste";
+	string fn = "../networks/";
+	if (argc > 1)	fn.append(string(argv[1]));
+	else	fn.append("plo");
 	goku = Kakaroto(fn);
-/**	string fn = "../networks/teste.el";
-	
-	srand(time(NULL));
-	theta.push_back(0);
-	theta.push_back(1);
-	theta.push_back(2.33);
-	omega.push_back(-0.5);
-	omega.push_back(1.20);
-	omega.push_back(0.3);
-	t0 = 0;
-	sigma = 0.01;
-	goku = Kakaroto (theta, t0, omega, sigma);
-	Util::readGraph (&(goku.graph), 0, 0, fn.c_str());
-	// goku.print();
-
-/**	sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
-	sf::View view(
-		sf::Vector2f(0.0, 0.0), 
-		sf::Vector2f(200,150) );
-	
-	window.setView(view);
-
-	// run the program as long as the window is open    
-	/**for (int i = 0; i < 100000; ++i) {
-    	sf::Event event;
-    	while (window.pollEvent(event))
-    	{
-        	// "close requested" event: we close the window
-        	if (event.type == sf::Event::Closed)
-            	window.close();
-    	}
-    	// clear the window with black color
-    	window.clear(sf::Color::Black);
-    	int size = igraph_vcount(&goku.graph);
-    	for (int j = 0; j < size; ++j) {
-    		double tt = goku.theta[j][i];
-    		sf::CircleShape sp(2);
-			sp.setPosition(-20+5*j, 0); 
-			sp.setFillColor( sf::Color(255*tt/(2*M_PI),
-				255*tt/(2*M_PI), 255*tt/(2*M_PI)) );
-			window.draw(sp);
-    	}
-    	window.display();
-    	sf::sleep( sf::seconds(0.00001) );	
-    }*/
 	goku.calc(100000);
 	goku.calcR();
 	cout << goku.R.back() << endl;

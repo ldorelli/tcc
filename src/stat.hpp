@@ -65,5 +65,27 @@ public:
 	static double unif (void) {
 		return rand()/(double)RAND_MAX;
 	}
+	static double unif (double a, double b) {
+		return unif()*(b-a)+a;
+	}
+	static void sample (vector<double> p, int n, vector<int> &ans) {
+		int i, j;
+		double r, acc, sum;
+		vector<bool> used(p.size(), false);
+		ans.clear();
+		for (i = 0; i < p.size(); i++)	sum += p[i];
+		for (i = 0; i < n; i++) {
+			r = unif(0, sum);
+			acc = 0;
+			for (j = 0; j < p.size() && acc < r; j++) {
+				if (!used[j])
+					acc += p[j];
+			}
+			j--;
+			ans.push_back(j);
+			sum -= p[j];
+			used[j] = true;
+		}
+	}
 };
 #endif
