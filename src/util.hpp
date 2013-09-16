@@ -28,23 +28,23 @@ public:
 			case 1:
 				sscanf (param, "%d", &g_m);
 				cerr << "BA " << g_m << endl;
-				igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
+				//igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
 
 				break;
 			case 2:
 				sscanf (param, "%lf", &g_p);
 				cerr << "ER " << g_p << endl;
-				igraph_erdos_renyi_game(graph, IGRAPH_ERDOS_RENYI_GNP, POPULATION, g_p, IGRAPH_UNDIRECTED, false);
+				//igraph_erdos_renyi_game(graph, IGRAPH_ERDOS_RENYI_GNP, POPULATION, g_p, IGRAPH_UNDIRECTED, false);
 				break;
 			case 3:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "WS " << g_m << " " << g_p << endl;
-				igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
+				//igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
 				break;
 			case 4:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "NLBA " << g_m << " " << g_p << endl;
-				igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
+				///igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
 				break;
 		}
 		if (fname) {
@@ -59,9 +59,9 @@ public:
 	
 	static void readGraph (igraph_t* graph, char* line, int &type) {
 		int pop;
-		char param[100];
-		sscanf (line, "%d %d %s", &pop, &type, param);
-		readGraph(graph, pop, type, param);
+		char param[100], fname[101];
+		sscanf (line, "%d %d %s %s", &pop, &type, param, fname);
+		readGraph(graph, pop, type, param, fname);
 	}
 	
 	static void readGraph (igraph_t* graph, string line, int &type) {

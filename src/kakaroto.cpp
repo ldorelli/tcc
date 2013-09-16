@@ -143,7 +143,6 @@ public:
 		}
 	}
 
-<<<<<<< HEAD
 	void draw_graph (void) {
 		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 		sf::View view(
@@ -251,7 +250,7 @@ int main (void) {
 	Kakaroto goku;
 	vector<double> theta, omega;
 	double t0, sigma;
-	string fn = "../networks/plo";
+	string fn = "../networks/teste";
 	goku = Kakaroto(fn);
 /**	string fn = "../networks/teste.el";
 	
