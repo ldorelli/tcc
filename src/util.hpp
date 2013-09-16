@@ -10,11 +10,11 @@ using namespace std;
 
 class Util {
 public:
-	static void readGraph (igraph_t* graph, int POPULATION, int type, const char* param) {
+	static void readGraph (igraph_t* graph, int POPULATION, int type, const char* param, char *fname) {
 		cerr << "plo\n";
 		int g_m;
 		double g_p;
-		FILE* instream;
+		FILE* instream, *outstream;
 		switch (type) {
 			case 0:
 				cerr << param << endl;
@@ -28,7 +28,8 @@ public:
 			case 1:
 				sscanf (param, "%d", &g_m);
 				cerr << "BA " << g_m << endl;
-				//igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
+				igraph_barabasi_game(graph, POPULATION, g_m, NULL, true, IGRAPH_UNDIRECTED);
+
 				break;
 			case 2:
 				sscanf (param, "%lf", &g_p);
@@ -38,13 +39,21 @@ public:
 			case 3:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "WS " << g_m << " " << g_p << endl;
-				//igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
+				igraph_watts_strogatz_game(graph, 1, POPULATION, g_m, g_p);
 				break;
 			case 4:
 				sscanf (param, "%d,%lf", &g_m, &g_p);
 				cerr << "NLBA " << g_m << " " << g_p << endl;
-				//igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
+				igraph_nonlinear_barabasi_game(graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
 				break;
+		}
+		if (fname) {
+			if ((outstream = fopen (fname, "w")) == NULL) {
+				fprintf (stderr, "Cannot open file %s\n", param);
+				throw 1;
+			}
+			igraph_write_graph_edgelist(graph, outstream);
+			fclose(outstream);
 		}
 	}
 	
