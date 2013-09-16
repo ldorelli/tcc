@@ -10,6 +10,43 @@
 
 using namespace std;
 
+sf::Color RGB_from_freq(double w) {
+	w = (w/(2*M_PI)) * 400;
+	w = 380 + w;
+	double R, G, B;
+	if (w >= 380 and w < 440) {
+    	R = -(w - 440.) / (440. - 380.);
+    	G = 0.0;
+    	B = 1.0;
+	} else if  (w >= 440 and w < 490) {
+    	R = 0.0;
+    	G = (w - 440.) / (490. - 440.);
+    	B = 1.0;
+    } else if (w >= 490 and w < 510) {
+    	R = 0.0;
+    	G = 1.0;
+    	B = -(w - 510.) / (510. - 490.)	;
+    } else if (w >= 510 and w < 580) {
+    	R = (w - 510.) / (580. - 510.);
+    	G = 1.0;
+    	B = 0.0;
+    } else if (w >= 580 and w < 645) {
+    	R = 1.0;
+    	G = -(w - 645.) / (645. - 580.);
+    	B = 0.0;
+    } else if (w >= 645 and w <= 780) {
+    	R = 1.0;
+    	G = 0.0;
+    	B = 0.0;
+    } else {
+    	R = 0.0;
+    	G = 0.0;
+    	B = 0.0;
+    }
+    // cout << R << " " << G << " " << B << endl;
+    return sf::Color(255*R, 255*G, 255*B);
+}
+
 class Kakaroto{
 public:
 	igraph_t graph;
@@ -149,10 +186,10 @@ public:
 			sf::Vector2f(0.0, 0.0), 
 			sf::Vector2f(200,150) );
 		window.setView(view);
+
+		
 		for (int i = 0; i < theta[0].size() && window.isOpen(); ++i) {
-			
 			sf::Event event;
-			double rho = 40;
 			
 			while (window.pollEvent(event))
 			{
@@ -161,31 +198,59 @@ public:
 					window.close();
 			}
 			window.clear(sf::Color::Black);
-			int size = igraph_vcount(&graph);
-			
+
+
+			int size = igraph_vcount(&graph);	
+			double rho = 40;
 			double angle = 0.0;
 			double step = 2*M_PI/(double)size;
 			
 			vector<double> x(size), y(size);
-
 			for (int j = 0; j < size; ++j) {
+				double tt = theta[j][i];
+				// x[j] = rho * cos(tt);
+				// y[j] = rho * sin(tt);
 				x[j] = rho * cos(angle);
 				y[j] = rho * sin(angle);
+				angle += step;
 			}
 
-			for (i = 0; i < size; i++) {
+			for (int k = 0; k < size; k++) {
 				igraph_vector_t nid;
 				igraph_vector_init (&nid, 0);
-				igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
+				igraph_neighbors(&graph, &nid, k, IGRAPH_IN);				
 				int adj_sz = igraph_vector_size(&nid);
 				for (int j = 0; j < adj_sz; ++j) {
-
+					int next = (int)VECTOR(nid)[j];
+					// cout << x[i] << " - " << x[next] <<  endl;
+					sf::Vertex A = sf::Vertex( sf::Vector2f(x[k], y[k]) );
+					sf::Vertex B = sf::Vertex( sf::Vector2f(x[next], y[next]));
+					double ta = theta[k][i]; 
+					double tb = theta[k][i]; 
+					A.color =  RGB_from_freq(ta); //sf::Color(ta, ta, ta);
+					B.color =  RGB_from_freq(tb); //sf::Color(tb, tb, tb);
+					sf::Vertex line [] = { A, B };
+					window.draw(line, 2, sf::Lines);
 				}
-			}
+			} 
 
-			for (int j = 0; j < size-np; ++j) {
+			for (int j = 0; j < size; ++j) {
+				sf::CircleShape sp(2.0);
 				double tt = theta[j][i];
-				sf::CircleShape sp(2);
+				// sp.setOrigin(2, 2);
+				sp.setPosition(x[j]-	2, y[j]-2);
+				// sp.setPosition(0, 0);
+				// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
+				sp.setFillColor(RGB_from_freq(tt));
+				window.draw(sp);
+			}
+			window.display();
+			sf::sleep(sf::seconds(0.01));
+		}
+/*
+			
+				
+				
 				sp.setPosition(rho*cos(angle), rho*sin(angle)); 
 				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
 					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
@@ -193,6 +258,7 @@ public:
 				window.draw(sp);
 			}
 		}		
+*/
 	}
 
 	void draw (string wname) {
@@ -257,7 +323,7 @@ int main (int argc, char* argv[]) {
 	goku.calc(100000);
 	goku.calcR();
 	cout << goku.R.back() << endl;
-	goku.draw(fn);
-
+	//goku.draw(fn);
+	goku.draw_graph();
 	return 0;
 }
