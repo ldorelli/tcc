@@ -59,19 +59,19 @@ public:
 
 	double f (int curr, vector<double> k, double coef) {
 		double sum = 0;
-		int i, size, next;
+		int i, n, size, next;
 		igraph_vector_t nid;
 
+		n = igraph_vcount(&graph);
 		igraph_vector_init (&nid, 0);
 		igraph_neighbors(&graph, &nid, curr, IGRAPH_IN);
 
 		size = igraph_vector_size(&nid);
 
 		//pacemaker
-		if (curr >= size - np)	return omega[curr];
+		if (curr >= n - np)	return omega[curr];
 
 		for (i = 0; i < size; i++) {
-			if (i == curr)	continue;	
 			next = (int)VECTOR(nid)[i];
 			sum += sin ((theta[next][theta[next].size()-1]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
 		}
@@ -135,6 +135,58 @@ public:
 		//	cout << r << endl;
 			R.push_back(r/(theta.size()*theta.size()));
 		}
+	}
+
+	void draw_graph (void) {
+		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+		sf::View view(
+			sf::Vector2f(0.0, 0.0), 
+			sf::Vector2f(200,150) );
+		window.setView(view);
+		for (int i = 0; i < theta[0].size() && window.isOpen(); ++i) {
+			
+			sf::Event event;
+			double rho = 40;
+			
+			while (window.pollEvent(event))
+			{
+				// "close requested" event: we close the window
+				if (event.type == sf::Event::Closed)
+					window.close();
+			}
+			window.clear(sf::Color::Black);
+			int size = igraph_vcount(&graph);
+			
+			double angle = 0.0;
+			double step = 2*M_PI/(double)size;
+			
+			vector<double> x(size), y(size);
+
+			for (int j = 0; j < size; ++j) {
+				x[j] = rho * cos(angle);
+				y[j] = rho * sin(angle);
+			}
+
+			for (i = 0; i < size; i++) {
+				igraph_vector_t nid;
+				igraph_vector_init (&nid, 0);
+				igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
+				int adj_sz = igraph_vector_size(&nid);
+				for (int j = 0; j < adj_sz; ++j) {
+
+				}
+			}
+
+			for (int j = 0; j < size-np; ++j) {
+				double tt = theta[j][i];
+				sf::CircleShape sp(2);
+				sp.setPosition(rho*cos(angle), rho*sin(angle)); 
+				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
+					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
+				//sp.setFillColor (sf::Color(255, 255, 255));
+				window.draw(sp);
+			}
+		}		
 	}
 
 	void draw (void) {
