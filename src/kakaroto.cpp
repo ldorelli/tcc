@@ -1,4 +1,5 @@
 #include "igraph.h"
+#include <cmath>
 #include <vector>
 #include <fstream>
 #include <stdlib.h>
@@ -21,7 +22,7 @@ public:
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, int _np) {
+	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, int _np, double _step) {
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
@@ -29,32 +30,37 @@ public:
 		omega = _omega;
 		sigma = _sigma;
 		np = _np;
+		step = _step;
 	}
 
 	Kakaroto (string fn) {
-		string el = fn, conf = fn;
+		string gr = fn, conf, line;
 		double _theta, _omega, _t0, _sigma, _step;
-		int size, _np;
+		int size, _np, plo;
 		ifstream file;
-		el.append(".el");
-		conf.append(".conf");
-		Util::readGraph (&graph, 0, 0, el.c_str());
+		gr.append(".gr");
+		file.open(gr.c_str());
+		getline(file, line);
+		Util::readGraph (&graph, line, plo);
+		getline(file, conf);
+		cout << conf << endl;
+		file.close();
 		file.open(conf.c_str());
 		file >> _t0 >> _sigma >> _np >> _step;
 		t.push_back(_t0);
 		sigma = _sigma;
 		np = _np;
 		step = _step;
-		while (file >> _theta >> _omega) {
+		size = igraph_vcount(&graph);
+		while (file >> _theta >> _omega && theta.size() < size) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
 			omega.push_back(_omega);
 		}
-		size = igraph_vcount(&graph);
 		cerr << size << theta.size() << endl;
 		file.close();
 		if (theta.size() != size)
-			throw "Graph and theta vector sizes differ.";
+			throw -7;
 	}
 
 	double f (int curr, vector<double> k, double coef) {
@@ -133,10 +139,11 @@ public:
 			}
 			double r = r1*r1 + r2*r2;
 		//	cout << r << endl;
-			R.push_back(r/(theta.size()*theta.size()));
+			R.push_back(sqrt(r)/theta.size());
 		}
 	}
 
+<<<<<<< HEAD
 	void draw_graph (void) {
 		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 		sf::View view(
@@ -189,10 +196,10 @@ public:
 		}		
 	}
 
-	void draw (void) {
+	void draw (string wname) {
 		double rho = 10;
 		
-		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+		sf::RenderWindow window(sf::VideoMode(800, 600), wname.c_str());
 		sf::View view(
 			sf::Vector2f(0.0, 0.0), 
 			sf::Vector2f(200,150) );
@@ -230,7 +237,7 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
-			printf("R: %.5lf\n", R[i]);
+		//	printf("R: %.5lf\n", R[i]);
 			window.display();
 			sf::sleep( sf::seconds(0.00001) );	
 		}
@@ -244,7 +251,7 @@ int main (void) {
 	Kakaroto goku;
 	vector<double> theta, omega;
 	double t0, sigma;
-	string fn = "../networks/teste";
+	string fn = "../networks/plo";
 	goku = Kakaroto(fn);
 /**	string fn = "../networks/teste.el";
 	
@@ -293,8 +300,8 @@ int main (void) {
     }*/
 	goku.calc(100000);
 	goku.calcR();
-	goku.draw();
 	cout << goku.R.back() << endl;
+	goku.draw(fn);
 
 	return 0;
 }
