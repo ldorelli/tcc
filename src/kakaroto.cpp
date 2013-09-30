@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string>
+#include <queue>
+
 #include <SFML/Graphics.hpp>
 #include "util.hpp"
 
@@ -55,7 +57,8 @@ public:
 	vector<double> omega, R;
 	double sigma, step;
 	int np;
-
+	vector<int> nivel;
+	vector<vector<int> > pnivel;
 
 	Kakaroto () {}
 
@@ -98,6 +101,103 @@ public:
 		file.close();
 		if (theta.size() != size)
 			throw -7;
+		nivel.resize(size, -1);
+		pnivel.resize(size);
+	}
+
+	void niveis ()
+	{
+		queue<int> q;
+		int size = igraph_vcount(&graph);
+		for (int i = size-np; i < size; ++i) {
+			q.push(i);
+			nivel[i] = 0;
+			pnivel[0].push_back(i);
+		}
+		while (!q.empty())
+		{
+			int curr = q.front(); q.pop();
+			igraph_vector_t nid;
+			igraph_vector_init (&nid, 0); 
+			igraph_neighbors(&graph, &nid, curr, IGRAPH_IN);				
+			int adj_sz = igraph_vector_size(&nid);
+			for (int j = 0; j < adj_sz; ++j)
+			{
+				int next = (int)VECTOR(nid)[j];
+				if (nivel[next] != -1) continue;
+				nivel[next] = nivel[curr] + 1;
+				pnivel[nivel[next]].push_back(next);
+				q.push(next);
+			}
+		}
+	}
+
+	void draw_niveis ()
+	{
+		niveis();
+		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+		sf::View view(
+			sf::Vector2f(0.0, 0.0), 
+			sf::Vector2f(400,300) );
+		window.setView(view);
+
+		for (int i = 0; i < theta[0].size() && window.isOpen(); ++i) {
+			sf::Event event;
+			
+			while (window.pollEvent(event))
+			{
+				// "close requested" event: we close the window
+				if (event.type == sf::Event::Closed)
+					window.close();
+			}
+			window.clear(sf::Color::Black);
+
+			int size = igraph_vcount(&graph);	
+
+			double rho = 20.0;
+			if (pnivel[0].size() == 1) rho = 0;
+			double rinc = 20.0;
+			for (int j = 0; j < size; ++j) 
+			{
+				if (pnivel[j].size() == 0) continue;
+				double angle = 0.0;
+				double step = 2*M_PI/(double)(pnivel[j].size());
+				vector<double> x(size), y(size);
+				for (int k = 0; k < pnivel[j].size(); ++k) {
+					int p = pnivel[j][k];
+					double tt = theta[p][i];
+					x[p] = rho * cos(angle);
+					y[p] = rho * sin(angle);
+					angle += step;
+				}
+				for (int k = 0; k < pnivel[j].size(); k++) 
+				{
+					int p = pnivel[j][k];
+					sf::CircleShape sp(2.0);
+					double tt = theta[p][i];
+					// sp.setOrigin(2, 2);
+					sp.setPosition(x[p]-2, y[p]-2);
+					// sp.setPosition(0, 0);
+					// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
+					sp.setFillColor(RGB_from_freq(tt));
+					window.draw(sp);
+				}
+				rho += rinc;
+			}
+			sf::Vertex A = sf::Vertex( sf::Vector2f(rho+6, rho) );
+			sf::Vertex B = sf::Vertex( sf::Vector2f(rho+6, -rho));
+			A.color = sf::Color::Blue;
+			B.color = sf::Color::Red;
+			sf::Vertex line [] = { A, B };
+			window.draw(line, 2, sf::Lines);
+			
+			sf::CircleShape sp(1.0);
+			sp.setPosition(rho+6-1.0, 2*rho*(1-R[i])-rho-1.0);
+			sp.setFillColor(sf::Color::White);
+			window.draw(sp);
+			window.display();
+			sf::sleep(sf::seconds(0.025));
+		}
 	}
 
 	double f (int curr, vector<double> k, double coef) {
@@ -180,14 +280,15 @@ public:
 		}
 	}
 
+
+
 	void draw_graph (void) {
 		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 		sf::View view(
 			sf::Vector2f(0.0, 0.0), 
-			sf::Vector2f(200,150) );
+			sf::Vector2f(400,300) );
 		window.setView(view);
 
-		
 		for (int i = 0; i < theta[0].size() && window.isOpen(); ++i) {
 			sf::Event event;
 			
@@ -201,7 +302,7 @@ public:
 
 
 			int size = igraph_vcount(&graph);	
-			double rho = 60;
+			double rho = 120;
 			double angle = 0.0;
 			double step = 2*M_PI/(double)size;
 			
@@ -233,8 +334,7 @@ public:
 					window.draw(line, 2, sf::Lines);
 				}
 			} 
-
-			for (int j = 0; j < size; ++j) {
+			for (int j = 0; j < size-np; ++j) {
 				sf::CircleShape sp(2.0);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
@@ -245,6 +345,16 @@ public:
 				window.draw(sp);
 			}
 
+			for (int j = size-np; j < size; ++j) {
+				sf::CircleShape sp(3.0, 3);
+				double tt = theta[j][i];
+				// sp.setOrigin(2, 2);
+				sp.setPosition(x[j]-3.0, y[j]-3.0);
+				// sp.setPosition(0, 0);
+				// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
+				sp.setFillColor(RGB_from_freq(tt));
+				window.draw(sp);
+			}
 			
 			sf::Vertex A = sf::Vertex( sf::Vector2f(rho+6, rho) );
 			sf::Vertex B = sf::Vertex( sf::Vector2f(rho+6, -rho));
@@ -260,20 +370,8 @@ public:
 			window.draw(sp);
 
 			window.display();
-			sf::sleep(sf::seconds(0.05));
+			sf::sleep(sf::seconds(0.025));
 		}
-/*
-			
-				
-				
-				sp.setPosition(rho*cos(angle), rho*sin(angle)); 
-				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
-					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
-				//sp.setFillColor (sf::Color(255, 255, 255));
-				window.draw(sp);
-			}
-		}		
-*/
 	}
 
 	void draw (string wname) {
@@ -342,10 +440,11 @@ int main (int argc, char* argv[]) {
 	sscanf (argv[2], "%lf", &step);
 
 	goku = Kakaroto(fn, sigma, step);
-	goku.calc(500);
+	goku.calc(5000);
 	goku.calcR();
 	cout << goku.R.back() << endl;
 	//goku.draw(fn);
-	goku.draw_graph();
+	// goku.draw_graph();
+	goku.draw_niveis();
 	return 0;
 }
