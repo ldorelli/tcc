@@ -54,23 +54,24 @@ public:
 	vector< double > t;
 	vector<double> omega, R;
 	double sigma, step;
-	int np;
+	vector<bool> isPacemaker;
+	int delay;
 
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, int _np, double _step) {
+	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, vector<bool> _isPacemaker, double _step) {
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
 		t.push_back(_t0);
 		omega = _omega;
 		sigma = _sigma;
-		np = _np;
+		isPacemaker = _isPacemaker;
 		step = _step;
 	}
 
-	Kakaroto (string fn, double _sigma, double _step) {
+	Kakaroto (string fn, double _sigma, double _step, int _delay = 0) {
 		string gr = fn, conf, line;
 		double _theta, _omega, _t0;
 		int size, _np, plo;
@@ -86,9 +87,15 @@ public:
 		file >> _t0 >>_np;
 		t.push_back(_t0);
 		sigma = _sigma;
-		np = _np;
 		step = _step;
+		delay = _delay;
 		size = igraph_vcount(&graph);
+		isPacemaker.resize(size, false);
+		for (int i = 0; i < _np; i++) {
+			int tmp;
+			file >> tmp;
+			isPacemaker[tmp] = true;
+		}
 		while (file >> _theta >> _omega && theta.size() < size) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
@@ -111,12 +118,11 @@ public:
 
 		size = igraph_vector_size(&nid);
 
-		//pacemaker
-		if (curr >= n - np)	return omega[curr];
+		if (isPacemaker[curr])	return omega[curr];
 
 		for (i = 0; i < size; i++) {
 			next = (int)VECTOR(nid)[i];
-			sum += sin ((theta[next][theta[next].size()-1]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
+			sum += sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
 		}
 		return omega[i]+sigma*sum;
 	}
@@ -178,6 +184,13 @@ public:
 		//	cout << r << endl;
 			R.push_back(sqrt(r)/theta.size());
 		}
+	}
+
+	void writeR (string fn) {
+		ofstream file;
+		file.open(fn.c_str());
+		Util::printRvector(file, R, "R");
+		file.close();
 	}
 
 	void draw_graph (void) {
@@ -262,18 +275,6 @@ public:
 			window.display();
 			sf::sleep(sf::seconds(0.05));
 		}
-/*
-			
-				
-				
-				sp.setPosition(rho*cos(angle), rho*sin(angle)); 
-				sp.setFillColor( sf::Color(255*(j+1)/(double)(size+1),
-					255*(j+1)/(double)(size+1), 255*(j+1)/(double)(size+1)) );
-				//sp.setFillColor (sf::Color(255, 255, 255));
-				window.draw(sp);
-			}
-		}		
-*/
 	}
 
 	void draw (string wname) {
@@ -299,7 +300,8 @@ public:
 			window.clear(sf::Color::Black);
 			int size = igraph_vcount(&graph);
 			int j;
-			for (j = 0; j < size-np; ++j) {
+			for (j = 0; j < size; ++j) {
+				if (isPacemaker[j])	continue;
 				double tt = theta[j][i];
 				sf::CircleShape sp(2);
 				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
@@ -308,7 +310,8 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
-			for (; j < size; ++j) {
+			for (j = 0; j < size; ++j) {
+				if (!isPacemaker[j])	continue;
 				double tt = theta[j][i];
 				sf::CircleShape sp(2);
 				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
@@ -342,10 +345,11 @@ int main (int argc, char* argv[]) {
 	sscanf (argv[2], "%lf", &step);
 
 	goku = Kakaroto(fn, sigma, step);
-	goku.calc(500);
+	goku.calc(5000);
 	goku.calcR();
 	cout << goku.R.back() << endl;
 	//goku.draw(fn);
-	goku.draw_graph();
+	//goku.draw_graph();
+	goku.writeR("waw.r");
 	return 0;
 }

@@ -50,7 +50,7 @@ public:
 				igraph_nonlinear_barabasi_game(&graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
 				break;
 			default:
-				printf ("Type %d not defined.\n", type);
+				fprintf (stderr, "Type %d not defined.\n", type);
 				return;
 		}
 		if ((outstream = fopen (fname, "w")) == NULL) {
