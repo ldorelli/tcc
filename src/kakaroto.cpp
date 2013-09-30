@@ -70,9 +70,9 @@ public:
 		step = _step;
 	}
 
-	Kakaroto (string fn) {
+	Kakaroto (string fn, double _sigma, double _step) {
 		string gr = fn, conf, line;
-		double _theta, _omega, _t0, _sigma, _step;
+		double _theta, _omega, _t0;
 		int size, _np, plo;
 		ifstream file;
 		gr.append(".gr");
@@ -80,10 +80,10 @@ public:
 		getline(file, line);
 		Util::readGraph (&graph, line.c_str());
 		getline(file, conf);
-		cout << conf << endl;
+		cerr << conf << endl;
 		file.close();
 		file.open(conf.c_str());
-		file >> _t0 >> _sigma >> _np >> _step;
+		file >> _t0 >>_np;
 		t.push_back(_t0);
 		sigma = _sigma;
 		np = _np;
@@ -201,15 +201,15 @@ public:
 
 
 			int size = igraph_vcount(&graph);	
-			double rho = 40;
+			double rho = 60;
 			double angle = 0.0;
 			double step = 2*M_PI/(double)size;
 			
 			vector<double> x(size), y(size);
 			for (int j = 0; j < size; ++j) {
 				double tt = theta[j][i];
-				// x[j] = rho * cos(tt);
-				// y[j] = rho * sin(tt);
+			//	x[j] = rho * cos(tt);
+			//	y[j] = rho * sin(tt);
 				x[j] = rho * cos(angle);
 				y[j] = rho * sin(angle);
 				angle += step;
@@ -238,14 +238,29 @@ public:
 				sf::CircleShape sp(2.0);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
-				sp.setPosition(x[j]-	2, y[j]-2);
+				sp.setPosition(x[j]-2, y[j]-2);
 				// sp.setPosition(0, 0);
 				// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
 				sp.setFillColor(RGB_from_freq(tt));
 				window.draw(sp);
 			}
+
+			
+			sf::Vertex A = sf::Vertex( sf::Vector2f(rho+6, rho) );
+			sf::Vertex B = sf::Vertex( sf::Vector2f(rho+6, -rho));
+			A.color = sf::Color::Blue;
+			B.color = sf::Color::Red;
+			sf::Vertex line [] = { A, B };
+			window.draw(line, 2, sf::Lines);
+			
+
+			sf::CircleShape sp(1.0);
+			sp.setPosition(rho+6-1.0, 2*rho*(1-R[i])-rho-1.0);
+			sp.setFillColor(sf::Color::White);
+			window.draw(sp);
+
 			window.display();
-			sf::sleep(sf::seconds(0.01));
+			sf::sleep(sf::seconds(0.05));
 		}
 /*
 			
@@ -315,12 +330,19 @@ public:
 int main (int argc, char* argv[]) {
 	Kakaroto goku;
 	vector<double> theta, omega;
-	double t0, sigma;
+	double sigma, step;
 	string fn = "../networks/";
-	if (argc > 1)	fn.append(string(argv[1]));
+	if (argc < 3) {
+		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)file name>\n", argv[0]);
+		return 1;
+	}
+	if (argc > 3)	fn.append(string(argv[3]));
 	else	fn.append("plo");
-	goku = Kakaroto(fn);
-	goku.calc(100000);
+	sscanf (argv[1], "%lf", &sigma);
+	sscanf (argv[2], "%lf", &step);
+
+	goku = Kakaroto(fn, sigma, step);
+	goku.calc(500);
 	goku.calcR();
 	cout << goku.R.back() << endl;
 	//goku.draw(fn);
