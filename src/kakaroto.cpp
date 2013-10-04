@@ -349,7 +349,7 @@ int main (int argc, char* argv[]) {
 	goku.calcR();
 	cout << goku.R.back() << endl;
 	//goku.draw(fn);
-	//goku.draw_graph();
+	goku.draw_graph();
 	goku.writeR("waw.r");
 	return 0;
 }
