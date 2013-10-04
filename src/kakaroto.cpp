@@ -59,21 +59,23 @@ public:
 	int np;
 	vector<int> nivel;
 	vector<vector<int> > pnivel;
+	vector<bool> isPacemaker;
+	int delay;
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, int _np, double _step) {
+	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, vector<bool> _isPacemaker, double _step) {
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
 		t.push_back(_t0);
 		omega = _omega;
 		sigma = _sigma;
-		np = _np;
+		isPacemaker = _isPacemaker;
 		step = _step;
 	}
 
-	Kakaroto (string fn, double _sigma, double _step) {
+	Kakaroto (string fn, double _sigma, double _step, int _delay = 0) {
 		string gr = fn, conf, line;
 		double _theta, _omega, _t0;
 		int size, _np, plo;
@@ -89,9 +91,15 @@ public:
 		file >> _t0 >>_np;
 		t.push_back(_t0);
 		sigma = _sigma;
-		np = _np;
 		step = _step;
+		delay = _delay;
 		size = igraph_vcount(&graph);
+		isPacemaker.resize(size, false);
+		for (int i = 0; i < _np; i++) {
+			int tmp;
+			file >> tmp;
+			isPacemaker[tmp] = true;
+		}
 		while (file >> _theta >> _omega && theta.size() < size) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
@@ -109,10 +117,12 @@ public:
 	{
 		queue<int> q;
 		int size = igraph_vcount(&graph);
-		for (int i = size-np; i < size; ++i) {
-			q.push(i);
-			nivel[i] = 0;
-			pnivel[0].push_back(i);
+		for (int i = 0; i < size; ++i) {
+			if (isPacemaker[i]) {
+				q.push(i);
+				nivel[i] = 0;
+				pnivel[0].push_back(i);				
+			}
 		}
 		while (!q.empty())
 		{
@@ -153,6 +163,7 @@ public:
 			window.clear(sf::Color::Black);
 
 			int size = igraph_vcount(&graph);	
+			vector<double> x(size), y(size);
 
 			double rho = 20.0;
 			if (pnivel[0].size() == 1) rho = 0;
@@ -162,7 +173,7 @@ public:
 				if (pnivel[j].size() == 0) continue;
 				double angle = 0.0;
 				double step = 2*M_PI/(double)(pnivel[j].size());
-				vector<double> x(size), y(size);
+				
 				for (int k = 0; k < pnivel[j].size(); ++k) {
 					int p = pnivel[j][k];
 					double tt = theta[p][i];
@@ -170,6 +181,7 @@ public:
 					y[p] = rho * sin(angle);
 					angle += step;
 				}
+
 				for (int k = 0; k < pnivel[j].size(); k++) 
 				{
 					int p = pnivel[j][k];
@@ -184,6 +196,7 @@ public:
 				}
 				rho += rinc;
 			}
+
 			sf::Vertex A = sf::Vertex( sf::Vector2f(rho+6, rho) );
 			sf::Vertex B = sf::Vertex( sf::Vector2f(rho+6, -rho));
 			A.color = sf::Color::Blue;
@@ -196,7 +209,7 @@ public:
 			sp.setFillColor(sf::Color::White);
 			window.draw(sp);
 			window.display();
-			sf::sleep(sf::seconds(0.025));
+			sf::sleep(sf::seconds(0.01));
 		}
 	}
 
@@ -211,12 +224,11 @@ public:
 
 		size = igraph_vector_size(&nid);
 
-		//pacemaker
-		if (curr >= n - np)	return omega[curr];
+		if (isPacemaker[curr])	return omega[curr];
 
 		for (i = 0; i < size; i++) {
 			next = (int)VECTOR(nid)[i];
-			sum += sin ((theta[next][theta[next].size()-1]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
+			sum += sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
 		}
 		return omega[i]+sigma*sum;
 	}
@@ -280,7 +292,12 @@ public:
 		}
 	}
 
-
+	void writeR (string fn) {
+		ofstream file;
+		file.open(fn.c_str());
+		Util::printRvector(file, R, "R");
+		file.close();
+	}
 
 	void draw_graph (void) {
 		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
@@ -334,7 +351,8 @@ public:
 					window.draw(line, 2, sf::Lines);
 				}
 			} 
-			for (int j = 0; j < size-np; ++j) {
+			for (int j = 0; j < size; ++j) {
+				if (isPacemaker[j]) continue;
 				sf::CircleShape sp(2.0);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
@@ -345,7 +363,8 @@ public:
 				window.draw(sp);
 			}
 
-			for (int j = size-np; j < size; ++j) {
+			for (int j = 0; j < size; ++j) {
+				if (!isPacemaker[j]) continue;
 				sf::CircleShape sp(3.0, 3);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
@@ -397,7 +416,8 @@ public:
 			window.clear(sf::Color::Black);
 			int size = igraph_vcount(&graph);
 			int j;
-			for (j = 0; j < size-np; ++j) {
+			for (j = 0; j < size; ++j) {
+				if (isPacemaker[j])	continue;
 				double tt = theta[j][i];
 				sf::CircleShape sp(2);
 				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
@@ -406,7 +426,8 @@ public:
 				//sp.setFillColor (sf::Color(255, 255, 255));
 				window.draw(sp);
 			}
-			for (; j < size; ++j) {
+			for (j = 0; j < size; ++j) {
+				if (!isPacemaker[j])	continue;
 				double tt = theta[j][i];
 				sf::CircleShape sp(2);
 				sp.setPosition(rho*cos(tt), rho*sin(tt)); 
@@ -446,5 +467,7 @@ int main (int argc, char* argv[]) {
 	//goku.draw(fn);
 	// goku.draw_graph();
 	goku.draw_niveis();
+	//goku.draw_graph();
+	goku.writeR("waw.r");
 	return 0;
 }
