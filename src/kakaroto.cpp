@@ -6,7 +6,7 @@
 #include <time.h>
 #include <string>
 #include <queue>
-
+#include <set>
 #include <SFML/Graphics.hpp>
 #include "util.hpp"
 
@@ -54,7 +54,7 @@ public:
 	igraph_t graph;
 	vector< vector< double > > theta;
 	vector< double > t;
-	vector<double> omega, R;
+	vector<double> omega, R, ang, R1, R2; 
 	double sigma, step;
 	int np;
 	vector<int> nivel;
@@ -64,7 +64,10 @@ public:
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, vector<bool> _isPacemaker, double _step) {
+	Kakaroto (vector< double > _theta0, double _t0, 
+		vector< double > _omega, double _sigma, 
+		vector<bool> _isPacemaker, double _step) 
+	{
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
@@ -73,6 +76,32 @@ public:
 		sigma = _sigma;
 		isPacemaker = _isPacemaker;
 		step = _step;
+	}
+
+	void connectPacemakersAll ()
+	{
+		int size = igraph_vcount(&graph);
+		for (int i = 0; i < size; ++i)
+		{
+			if (isPacemaker[i])
+			{
+				igraph_vector_t nid;
+				igraph_vector_init (&nid, 0); 
+				igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
+				int adj_sz = igraph_vector_size(&nid);
+				std::set<int> N;
+				for (int j = 0; j < adj_sz; ++j)
+				{
+					int next = (int)VECTOR(nid)[j];
+					N.insert(next);
+				}	
+				for (int j = 0; j < size; ++j)
+				{
+					if (N.count (j) == 0) 
+						igraph_add_edge (&graph, i, j);
+				}
+			}
+		}
 	}
 
 	Kakaroto (string fn, double _sigma, double _step, int _delay = 0) {
@@ -289,6 +318,9 @@ public:
 			double r = r1*r1 + r2*r2;
 		//	cout << r << endl;
 			R.push_back(sqrt(r)/theta.size());
+			ang.push_back(atan2(r2, r1));
+			R1.push_back(r1);
+			R2.push_back(r2);
 		}
 	}
 
@@ -326,10 +358,10 @@ public:
 			vector<double> x(size), y(size);
 			for (int j = 0; j < size; ++j) {
 				double tt = theta[j][i];
-			//	x[j] = rho * cos(tt);
-			//	y[j] = rho * sin(tt);
-				x[j] = rho * cos(angle);
-				y[j] = rho * sin(angle);
+				x[j] = rho * cos(tt);
+				y[j] = rho * sin(tt);
+				// x[j] = rho * cos(angle);
+				// y[j] = rho * sin(angle);
 				angle += step;
 			}
 
@@ -387,6 +419,18 @@ public:
 			sp.setPosition(rho+6-1.0, 2*rho*(1-R[i])-rho-1.0);
 			sp.setFillColor(sf::Color::White);
 			window.draw(sp);
+
+			sf::CircleShape med(3.0, 3);
+			med.setPosition(R1[i]-3.0, R2[i]-3.0);
+			med.setFillColor(sf::Color::White);
+			window.draw(med);
+
+			A = sf::Vertex( sf::Vector2f(0, 0) );
+			B = sf::Vertex( sf::Vector2f(R1[i], R2[i]));
+			A.color = sf::Color::White;
+			B.color = sf::Color::White;
+			sf::Vertex lin [] = { A, B };
+			window.draw(lin, 2, sf::Lines);
 
 			window.display();
 			sf::sleep(sf::seconds(0.025));
@@ -451,22 +495,31 @@ int main (int argc, char* argv[]) {
 	vector<double> theta, omega;
 	double sigma, step;
 	string fn = "../networks/";
-	if (argc < 3) {
-		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)file name>\n", argv[0]);
+	if (argc < 4) {
+		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <4. draw type> <3.(optional)file name>\n", argv[0]);
 		return 1;
 	}
-	if (argc > 3)	fn.append(string(argv[3]));
+	if (argc > 4)	fn.append(string(argv[4]));
 	else	fn.append("plo");
+
+	int which = 0;
+	if (argc > 3) sscanf (argv[3], "%d", &which);
+
 	sscanf (argv[1], "%lf", &sigma);
 	sscanf (argv[2], "%lf", &step);
-
 	goku = Kakaroto(fn, sigma, step);
+	goku.connectPacemakersAll();
 	goku.calc(5000);
 	goku.calcR();
-	cout << goku.R.back() << endl;
-	//goku.draw(fn);
-	// goku.draw_graph();
-	goku.draw_niveis();
+	double R = 0.0;
+	for (int i = 200; i < goku.R.size(); ++i)
+		R += goku.R[i];
+	cout << R/(goku.R.size()-200) << endl;
+	cout << goku.ang.back() << endl;
+	 
+	if (which == 1) goku.draw_niveis();
+	else if (which == 2) goku.draw_graph();
+	// goku.draw_niveis();
 	//goku.draw_graph();
 	goku.writeR("waw.r");
 	return 0;
