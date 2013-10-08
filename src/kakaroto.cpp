@@ -218,9 +218,11 @@ public:
 					double tt = theta[p][i];
 					// sp.setOrigin(2, 2);
 					sp.setPosition(x[p]-2, y[p]-2);
-					// sp.setPosition(0, 0);
-					// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
-					sp.setFillColor(RGB_from_freq(tt));
+					if ( fabs(tt) < 1e-2 
+						|| fabs (tt - 2*M_PI) < 1e-2
+						|| fabs (tt - M_PI) < 1e-2) sp.setFillColor(sf::Color::Yellow);
+					else sp.setFillColor (sf::Color (40, 40, 40) );
+					// sp.setFillColor(RGB_from_freq(tt));
 					window.draw(sp);
 				}
 				rho += rinc;
@@ -268,6 +270,15 @@ public:
 		return theta[curr][theta[curr].size()-1]+k[curr]*coef;	
 	}
 
+	double  circle (double ans)
+	{
+		double aa;
+		aa = floor( fabs(ans)/(2*M_PI) );
+		if (ans < 0)	ans += aa+2*M_PI;
+		else	ans -= aa*2*M_PI;
+		return ans;
+	}
+
 	void calc (int n) {
 		int i, j, size;
 		vector<double> k0, k1, k2, k3, k4;
@@ -289,10 +300,7 @@ public:
 				k4.push_back(f(j, k3, step));
 			for (j = 0; j < size; j++) {
 				ans = theta[j][i-1] + (step/6.0)*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
-				aa = floor( fabs(ans)/(2*M_PI) );
-				if (ans < 0)	ans += aa+2*M_PI;
-				else	ans -= aa*2*M_PI;
-				theta[j].push_back (ans);
+				theta[j].push_back ( circle	(ans) );
 			}
 		}
 	}
@@ -508,7 +516,7 @@ int main (int argc, char* argv[]) {
 	sscanf (argv[1], "%lf", &sigma);
 	sscanf (argv[2], "%lf", &step);
 	goku = Kakaroto(fn, sigma, step);
-	goku.connectPacemakersAll();
+	// goku.connectPacemakersAll();
 	goku.calc(5000);
 	goku.calcR();
 	double R = 0.0;
