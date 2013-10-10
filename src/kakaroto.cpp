@@ -15,7 +15,7 @@ using namespace std;
 sf::Color RGB_from_freq(double w) {
 	if (fabs (w) > M_PI) {
 		printf ("%lf\n", w);
-		throw;
+		throw -1;
 	}
 	w += M_PI;
 	w = (w/(2*M_PI)) * 400;
@@ -232,9 +232,11 @@ public:
 					double tt = theta[p][i];
 					// sp.setOrigin(2, 2);
 					sp.setPosition(x[p]-2, y[p]-2);
-					// sp.setPosition(0, 0);
-					// sp.setFillColor( sf::Color(tt/2*M_PI * 255, tt/2*M_PI * 255, tt/2*M_PI * 255) );
-					sp.setFillColor(RGB_from_freq(tt));
+					if ( fabs(tt) < 1e-2 
+						|| fabs (tt - 2*M_PI) < 1e-2
+						|| fabs (tt - M_PI) < 1e-2) sp.setFillColor(sf::Color::Yellow);
+					else sp.setFillColor (sf::Color (40, 40, 40) );
+					// sp.setFillColor(RGB_from_freq(tt));
 					window.draw(sp);
 				}
 				rho += rinc;
@@ -281,6 +283,14 @@ public:
 		double sum = 0;
 		int i, size, next;
 		return theta[curr][theta[curr].size()-1]+k[curr]*coef;	
+	}
+	double  circle (double ans)
+	{
+		double aa;
+		aa = floor( fabs(ans)/(2*M_PI) );
+		if (ans < 0)	ans += aa+2*M_PI;
+		else	ans -= aa*2*M_PI;
+		return ans;
 	}
 
 	void calc (int iter) {
@@ -576,6 +586,7 @@ int main (int argc, char* argv[]) {
 	//goku.draw(fn);
 	goku.connectPacemakersAll();
 	goku.calc(1000);
+
 	goku.calcR();
 	double R = 0.0;
 	for (int i = 200; i < goku.R.size(); ++i)
