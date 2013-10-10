@@ -2,10 +2,8 @@ genConfNorm <- function (file, pop, t0, np) {
 	cat (paste(t0, np, sep=' '), file=file, sep="\n")
 	for (i in 1:pop) {
 		x = 0
-		while (x == 0) {
-			x = rnorm(1, 0, 1)
-		}
-		cat (paste(rnorm (1, pi, pi/3), x, sep=' '), file = file, append = TRUE, sep="\n")
+		x = rnorm(1, 0, 1)
+		cat (paste(rnorm (1, 0, pi/3), x, sep=' '), file = file, append = TRUE, sep="\n")
 	}
 }
 
@@ -14,7 +12,7 @@ genConfUnif <- function (file, pop, t0, np) {
 	for (i in 1:pop) {
 		x = 0
 		while (x == 0) {
-			x = runif(1, 0, 1)
+			x = runif(1, -1, 1)
 		}
 		cat (paste(runif (1, 0, 1), x, sep=' '), file = file, append = TRUE, sep="\n")
 	}

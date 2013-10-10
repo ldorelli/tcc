@@ -6,13 +6,18 @@
 #include <time.h>
 #include <string>
 #include <queue>
-
+#include <set>
 #include <SFML/Graphics.hpp>
 #include "util.hpp"
 
 using namespace std;
 
 sf::Color RGB_from_freq(double w) {
+	if (fabs (w) > M_PI) {
+		printf ("%lf\n", w);
+		throw;
+	}
+	w += M_PI;
 	w = (w/(2*M_PI)) * 400;
 	w = 380 + w;
 	double R, G, B;
@@ -50,8 +55,8 @@ sf::Color RGB_from_freq(double w) {
 }
 
 double dif (double a1, double a0) {
-	if (a1 >= a0)	return a1-a0;
-	else	return a1+2*M_PI-a0;
+	if (a1 > a0)	return min (a1-a0, a0+2*M_PI-a1);
+	else	return min (a0-a1, a1+2*M_PI-a1);
 }
 
 class Kakaroto{
@@ -59,7 +64,7 @@ public:
 	igraph_t graph;
 	vector< vector< double > > theta;
 	vector< double > t;
-	vector<double> omega, R;
+	vector<double> omega, R, ang, R1, R2; 
 	double sigma, step;
 	int np;
 	vector<int> nivel;
@@ -69,7 +74,10 @@ public:
 
 	Kakaroto () {}
 
-	Kakaroto (vector< double > _theta0, double _t0, vector< double > _omega, double _sigma, vector<bool> _isPacemaker, double _step) {
+	Kakaroto (vector< double > _theta0, double _t0, 
+		vector< double > _omega, double _sigma, 
+		vector<bool> _isPacemaker, double _step) 
+	{
 		theta.resize(_theta0.size());
 		for (int i = 0; i < _theta0.size(); i++)
 			theta[i].push_back(_theta0[i]);
@@ -80,18 +88,48 @@ public:
 		step = _step;
 	}
 
+	void connectPacemakersAll ()
+	{
+		int size = igraph_vcount(&graph);
+		for (int i = 0; i < size; ++i)
+		{
+			if (isPacemaker[i])
+			{
+				igraph_vector_t nid;
+				igraph_vector_init (&nid, 0); 
+				igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
+				int adj_sz = igraph_vector_size(&nid);
+				std::set<int> N;
+				for (int j = 0; j < adj_sz; ++j)
+				{
+					int next = (int)VECTOR(nid)[j];
+					N.insert(next);
+				}	
+				for (int j = 0; j < size; ++j)
+				{
+					if (N.count (j) == 0) 
+						igraph_add_edge (&graph, i, j);
+				}
+				igraph_vector_destroy(&nid);
+			}
+		}
+	}
+
 	Kakaroto (string fn, double _sigma, double _step, int _delay = 0) {
 		string gr = fn, conf, line;
 		double _theta, _omega, _t0;
 		int size, _np, plo;
 		ifstream file;
+		//leitura dos arquivos
 		gr.append(".gr");
 		file.open(gr.c_str());
+		//leitura do grafo
 		getline(file, line);
 		Util::readGraph (&graph, line.c_str());
 		getline(file, conf);
 		cerr << conf << endl;
 		file.close();
+		//leitura da configuracao
 		file.open(conf.c_str());
 		file >> _t0 >>_np;
 		t.push_back(_t0);
@@ -110,10 +148,9 @@ public:
 			theta[theta.size()-1].push_back(_theta);
 			omega.push_back(_omega);
 		}
-		cerr << size << theta.size() << endl;
 		file.close();
 		if (theta.size() != size)
-			throw -7;
+			throw;
 		nivel.resize(size, -1);
 		pnivel.resize(size);
 	}
@@ -134,7 +171,7 @@ public:
 			int curr = q.front(); q.pop();
 			igraph_vector_t nid;
 			igraph_vector_init (&nid, 0); 
-			igraph_neighbors(&graph, &nid, curr, IGRAPH_IN);				
+			igraph_neighbors(&graph, &nid, curr, IGRAPH_OUT);				
 			int adj_sz = igraph_vector_size(&nid);
 			for (int j = 0; j < adj_sz; ++j)
 			{
@@ -144,6 +181,7 @@ public:
 				pnivel[nivel[next]].push_back(next);
 				q.push(next);
 			}
+			igraph_vector_destroy(&nid);
 		}
 	}
 
@@ -220,22 +258,23 @@ public:
 
 	double f (int curr, vector<double> k, double coef) {
 		double sum = 0;
-		int i, n, size, next;
+		int i, size, adj_size, next;
 		igraph_vector_t nid;
 
-		n = igraph_vcount(&graph);
+		size = igraph_vcount(&graph);
 		igraph_vector_init (&nid, 0);
 		igraph_neighbors(&graph, &nid, curr, IGRAPH_IN);
 
-		size = igraph_vector_size(&nid);
+		adj_size = igraph_vector_size(&nid);
 
 		if (isPacemaker[curr])	return omega[curr];
 
-		for (i = 0; i < size; i++) {
+		for (i = 0; i < adj_size; i++) {
 			next = (int)VECTOR(nid)[i];
 			sum += sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
 		}
-		return omega[i]+sigma*sum;
+		igraph_vector_destroy(&nid);
+		return omega[curr]+sigma*sum;
 	}
 	
 	double f2 (int curr, vector<double> k, double coef) {
@@ -244,31 +283,31 @@ public:
 		return theta[curr][theta[curr].size()-1]+k[curr]*coef;	
 	}
 
-	void calc (int n) {
-		int i, j, size;
+	void calc (int iter) {
+		int it, i, size;
 		vector<double> k0, k1, k2, k3, k4;
 		double  ans, aa;
 		size = igraph_vcount (&graph);
 		k0 = vector<double> (size, 0);
-		for (i = 1; i <= n; i++) {
+		for (it = 1; it <= iter; it++) {
 			k1.clear();
 			k2.clear();
 			k3.clear();
 			k4.clear();
-			for (j = 0; j < size; j++)
-				k1.push_back(f(j, k0, 0));
-			for (j = 0; j < size; j++)
-				k2.push_back(f(j, k1, step/2));
-			for (j = 0; j < size; j++)
-				k3.push_back(f(j, k2, step/2));
-			for (j = 0; j < size; j++)
-				k4.push_back(f(j, k3, step));
-			for (j = 0; j < size; j++) {
-				ans = theta[j][i-1] + (step/6.0)*(k1[j]+2*k2[j]+2*k3[j]+k4[j]);
-				aa = floor( fabs(ans)/(2*M_PI) );
-				if (ans < 0)	ans += aa+2*M_PI;
-				else	ans -= aa*2*M_PI;
-				theta[j].push_back (ans);
+			for (i = 0; i < size; i++)
+				k1.push_back(f(i, k0, 0));
+			for (i = 0; i < size; i++)
+				k2.push_back(f(i, k1, step/2));
+			for (i = 0; i < size; i++)
+				k3.push_back(f(i, k2, step/2));
+			for (i = 0; i < size; i++)
+				k4.push_back(f(i, k3, step));
+			for (i = 0; i < size; i++) {
+				ans = theta[i][it-1] + (step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
+				while (ans < -M_PI)	ans += 2*M_PI;
+				while (ans > M_PI)	ans -= 2*M_PI;
+
+				theta[i].push_back (ans);
 			}
 		}
 	}
@@ -284,6 +323,7 @@ public:
 	}
 
 	void calcR() {
+		printf ("%d\n", theta.size());
 		for (int i = 0; i < theta[0].size(); ++i) {
 			double r1 = 0.0;
 			double r2 = 0.0;
@@ -294,6 +334,9 @@ public:
 			double r = r1*r1 + r2*r2;
 		//	cout << r << endl;
 			R.push_back(sqrt(r)/theta.size());
+			ang.push_back(atan2(r2, r1));
+			R1.push_back(r1);
+			R2.push_back(r2);
 		}
 	}
 
@@ -379,10 +422,10 @@ public:
 			vector<double> x(size), y(size);
 			for (int j = 0; j < size; ++j) {
 				double tt = theta[j][i];
-			//	x[j] = rho * cos(tt);
-			//	y[j] = rho * sin(tt);
-				x[j] = rho * cos(angle);
-				y[j] = rho * sin(angle);
+				x[j] = rho * cos(tt);
+				y[j] = rho * sin(tt);
+				// x[j] = rho * cos(angle);
+				// y[j] = rho * sin(angle);
 				angle += step;
 			}
 
@@ -403,6 +446,7 @@ public:
 					sf::Vertex line [] = { A, B };
 					window.draw(line, 2, sf::Lines);
 				}
+				igraph_vector_destroy(&nid);
 			} 
 			for (int j = 0; j < size; ++j) {
 				if (isPacemaker[j]) continue;
@@ -440,6 +484,18 @@ public:
 			sp.setPosition(rho+6-1.0, 2*rho*(1-R[i])-rho-1.0);
 			sp.setFillColor(sf::Color::White);
 			window.draw(sp);
+
+			sf::CircleShape med(3.0, 3);
+			med.setPosition(R1[i]-3.0, R2[i]-3.0);
+			med.setFillColor(sf::Color::White);
+			window.draw(med);
+
+			A = sf::Vertex( sf::Vector2f(0, 0) );
+			B = sf::Vertex( sf::Vector2f(R1[i], R2[i]));
+			A.color = sf::Color::White;
+			B.color = sf::Color::White;
+			sf::Vertex lin [] = { A, B };
+			window.draw(lin, 2, sf::Lines);
 
 			window.display();
 			sf::sleep(sf::seconds(0.025));
@@ -505,21 +561,30 @@ int main (int argc, char* argv[]) {
 	double sigma, step;
 	string fn = "../networks/";
 	if (argc < 3) {
-		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)file name>\n", argv[0]);
+		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)draw type(1-per level, 2-moving)> <4.(optional)file name>\n", argv[0]);
 		return 1;
 	}
-	if (argc > 3)	fn.append(string(argv[3]));
+	if (argc > 4)	fn.append(string(argv[4]));
 	else	fn.append("plo");
+
+	int which = 0;
+	if (argc > 3) sscanf (argv[3], "%d", &which);
+
 	sscanf (argv[1], "%lf", &sigma);
 	sscanf (argv[2], "%lf", &step);
-
 	goku = Kakaroto(fn, sigma, step);
-	goku.calc(10000);
-	goku.calcR();
-	cout << goku.R.back() << endl;
 	//goku.draw(fn);
-	//goku.draw_graph();
-	//goku.draw_niveis();
+	goku.connectPacemakersAll();
+	goku.calc(1000);
+	goku.calcR();
+	double R = 0.0;
+	for (int i = 200; i < goku.R.size(); ++i)
+		R += goku.R[i];
+	cerr << "R medio: " << R/(goku.R.size()-200) << endl;
+	cerr << "Angulo final: " << goku.ang.back() << endl;
+	cout << R/(goku.R.size()-200) << endl; 
+	if (which == 1) goku.draw_niveis();
+	else if (which == 2) goku.draw_graph();
 	goku.writeR("waw.r");
 	goku.calcVarFreq (var);
 	ofstream plo;
