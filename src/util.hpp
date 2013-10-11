@@ -57,7 +57,10 @@ public:
 			fprintf (stderr, "Cannot open file %s\n", fname);
 			throw 1;
 		}
-		fprintf (stderr, "Writing to %s %d\n", fname, (int)igraph_vcount(&graph));
+		int e, n;
+		e = (int)igraph_ecount(&graph);
+		n = (int)igraph_vcount(&graph);
+		fprintf (stderr, "Writing to %s N = %d <k> = %lf\n", fname, n, 2*e/(double)n);
 		igraph_write_graph_edgelist(&graph, outstream);
 		fclose(outstream);
 	}
