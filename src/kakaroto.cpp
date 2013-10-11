@@ -333,7 +333,6 @@ public:
 	}
 
 	void calcR() {
-		printf ("%d\n", theta.size());
 		for (int i = 0; i < theta[0].size(); ++i) {
 			double r1 = 0.0;
 			double r2 = 0.0;
@@ -585,7 +584,7 @@ int main (int argc, char* argv[]) {
 	goku = Kakaroto(fn, sigma, step);
 	//goku.draw(fn);
 	goku.connectPacemakersAll();
-	goku.calc(1000);
+	goku.calc(500);
 
 	goku.calcR();
 	double R = 0.0;
@@ -596,10 +595,10 @@ int main (int argc, char* argv[]) {
 	cout << R/(goku.R.size()-200) << endl; 
 	if (which == 1) goku.draw_niveis();
 	else if (which == 2) goku.draw_graph();
-	goku.writeR("waw.r");
+	goku.writeR("../Resultado/waw.r");
 	goku.calcVarFreq (var);
 	ofstream plo;
-	plo.open ("waw.r", std::ofstream::out | std::ofstream::app);
+	plo.open ("../Resultado/waw.r", std::ofstream::out | std::ofstream::app);
 	Util::printRvector(plo, var, "var");
 	plo.close();
 	return 0;

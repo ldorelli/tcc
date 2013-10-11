@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-subprocess.call("rm res.r", shell=True)
+subprocess.call("rm ../Resultado/res.r", shell=True)
 
 sig = 0.0
 while sig <= 1:
@@ -9,8 +9,9 @@ while sig <= 1:
 	if len(sys.argv) > 1:
 		cmd += " " + sys.argv[1]
 	print cmd
-	f = open("res.r", 'a')
+	f = open("../Resultado/res.r", 'a')
 	f.write (str(sig)+" ")
 	f.flush()
 	subprocess.call(cmd, shell=True, stdout=f)
 	sig += 0.01
+print '\a'

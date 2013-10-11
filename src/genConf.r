@@ -3,7 +3,7 @@ genConfNorm <- function (file, pop, t0, np) {
 	for (i in 1:pop) {
 		x = 0
 		x = rnorm(1, 0, 1)
-		cat (paste(rnorm (1, 0, pi/3), x, sep=' '), file = file, append = TRUE, sep="\n")
+		cat (paste(rnorm (1, 0, pi/6), x, sep=' '), file = file, append = TRUE, sep="\n")
 	}
 }
 
