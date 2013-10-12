@@ -494,7 +494,7 @@ public:
 			sp.setFillColor(sf::Color::White);
 			window.draw(sp);
 
-			sf::CircleShape med(3.0, 3);
+			sf::CircleShape med(3.0);
 			med.setPosition(R1[i]-3.0, R2[i]-3.0);
 			med.setFillColor(sf::Color::White);
 			window.draw(med);
@@ -583,8 +583,8 @@ int main (int argc, char* argv[]) {
 	sscanf (argv[2], "%lf", &step);
 	goku = Kakaroto(fn, sigma, step);
 	//goku.draw(fn);
-	goku.connectPacemakersAll();
-	goku.calc(500);
+	//goku.connectPacemakersAll();
+	goku.calc(10000);
 
 	goku.calcR();
 	double R = 0.0;
