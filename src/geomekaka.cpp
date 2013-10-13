@@ -17,20 +17,25 @@ int main (int argc, char* argv[]) {
 	Kakaroto goku;
 	vector<double> theta, omega, var;
 	double sigma, step;
+	int type;
 	string fn = "../networks/";
 	if (argc < 3) {
-		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)draw type(1-per level, 2-moving)> <4.(optional)file name>\n", argv[0]);
+		fprintf (stderr, "Usage: %s <1.type(0-sigma, 1-points)> <2.parameter> <3.step> <4.(optional)draw type(1-per level, 2-moving)> <5.(optional)file name>\n", argv[0]);
 		return 1;
 	}
-	if (argc > 4)	fn.append(string(argv[4]));
+	if (argc > 5)	fn.append(string(argv[5]));
 	else	fn.append("plo");
 
 	int which = 0;
-	if (argc > 3) sscanf (argv[3], "%d", &which);
+	if (argc > 4) sscanf (argv[4], "%d", &which);
 
-	sscanf (argv[1], "%lf", &sigma);
-	sscanf (argv[2], "%lf", &step);
-	goku = Kakaroto(fn, sigma, step);
+	sscanf (argv[1], "%d", &type);
+	sscanf (argv[3], "%lf", &step);
+	if (type)	goku = Kakaroto(fn, argv[2], step);
+	else {
+		sscanf (argv[2], "%lf", &sigma);
+		goku = Kakaroto(fn, sigma, step);
+	}
 	//goku.draw(fn);
 	//goku.connectPacemakersAll();
 	goku.calc(10000);
