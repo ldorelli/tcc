@@ -49,6 +49,11 @@ public:
 				cerr << "NLBA " << g_m << " " << g_p << endl;
 				igraph_nonlinear_barabasi_game(&graph, POPULATION, g_p, g_m, NULL, true, 0.01, IGRAPH_UNDIRECTED);
 				break;
+			case 5:
+				sscanf (param, "%d,%lf", &g_m, &g_p);
+				cerr << "SF2ER " << g_m << " " << g_p << endl;
+				Graph::SF2ER(&graph, POPULATION, g_m, g_p, IGRAPH_UNDIRECTED);
+				break;
 			default:
 				fprintf (stderr, "Type %d not defined.\n", type);
 				return;

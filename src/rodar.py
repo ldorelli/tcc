@@ -16,5 +16,5 @@ else:
 		f.write (str(sig)+" ")
 		f.flush()
 		subprocess.call(cmd, shell=True, stdout=f)
-		sig += 0.01
+		sig += 0.05
 	print '\a'

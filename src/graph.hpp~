@@ -3,47 +3,38 @@
 
 class Graph {
 public:
-	static void SF2ER (igraph_t *graph, int N, int param, double alpha, bool isDirected) {
-
+	void SF2ER (int N, double alpha, int param, bool isDirected) {
 		int i, j, k, m;
-		igraph_bool_t areconn;
-		vector<int> p (N, 0); //quantidade de arestas PA
-		int etot = 0, acc;
-		igraph_empty(graph, N, isDirected);
+		vector<double> p (2*param+1, isDirected); //quantidade de arestas PA
+		long long etot = 0, acc;
+		ecount = vector<int>(N,0);
 		for (i = 0; i < 2*param+1; i++)
 			for (j = i+1; j < 2*param+1; j++) {
 				igraph_add_edge (graph, i, j);
 				p[j]++;
 				if (!isDirected)	p[i]++;
-				etot += 1+(!isDirected);
+				etot += 2;
 			}
 		for (; i < N; i++) {			
 			for (m = param; m > 0; m--) {
 				if (Statistic::unif() < alpha) { //ER
-					do {
-						j = rand()%(N-1);
-						if (j >= i)	j++;
-						igraph_are_connected(graph, i, j, &areconn);
-						//printf ("er %d\n", (int)areconn);
-					} while (areconn == 1);
+					j = rand()%(N-1);
+					if (j >= i)	j++;
 					igraph_add_edge (graph, i, j);
-				} else { //SF
-					do {
-						k = rand()%(etot-p[i]);
-						//printf ("%d %d %d\n", k, etot, p[i]);
-						acc = 0;
-						for (j = 0; j < N; j++) {
-							if (i == j)	continue;
-							if (acc+p[j] >= k)	break;
-							acc+=p[j];
+				} else { //SW
+					k = rand()%(etot-ecount[i]);
+					acc = 0;
+					for (j = 0; j < N; j++) {
+						if (i == j)	continue;
+						if (acc+ecount[j] >= k) {
+							igraph_add_edge (graph, i, j);
+							p[j]++;
+							if (!isDirected)	p[i]++;
+							etot += 2;
+							break;
 						}
-						igraph_are_connected(graph, i, j, &areconn);
-						//printf ("sf %d %d %d\n",k, (int)areconn, etot);
-					} while (areconn == 1);
-					igraph_add_edge (graph, i, j);
-					p[j]++;
-					if (!isDirected)	p[i]++;
-					etot += 1+(!isDirected);
+						acc+=p[j];
+					}
 				}
 			}
 		}
