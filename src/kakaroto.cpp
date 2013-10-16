@@ -18,6 +18,7 @@ int main (int argc, char* argv[]) {
 	vector<double> theta, omega, var;
 	double sigma, step;
 	string fn = "";
+
 	if (argc < 3) {
 		fprintf (stderr, "Usage: %s <1.sigma> <2.step> <3.(optional)draw type:1-per level, 2-moving> <4.(optional)file name>\n", argv[0]);
 		return 1;
@@ -33,8 +34,8 @@ int main (int argc, char* argv[]) {
 	goku = Kakaroto(fn, sigma, step);
 	//goku.draw(fn);
 	//goku.connectPacemakersAll();
-	goku.calc(1000);
-
+	goku.calc(500);
+	goku.niveis();
 	goku.calcR();
 	double R = 0.0;
 	for (int i = 200; i < goku.R.size(); ++i)
@@ -50,5 +51,9 @@ int main (int argc, char* argv[]) {
 	plo.open ("../Resultado/waw.r", std::ofstream::out | std::ofstream::app);
 	Util::printRvector(plo, var, "var");
 	plo.close();
+	
+	goku.faseMediaPorNivel();
+	goku.dumpAll();
+	
 	return 0;
 }
