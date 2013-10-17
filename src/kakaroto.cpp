@@ -33,7 +33,7 @@ int main (int argc, char* argv[]) {
 	goku = Kakaroto(fn, sigma, step);
 	//goku.draw(fn);
 	//goku.connectPacemakersAll();
-	goku.calc(1000);
+	goku.calc(10000);
 
 	goku.calcR();
 	double R = 0.0;
