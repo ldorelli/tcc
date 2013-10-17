@@ -73,8 +73,9 @@ public:
 	int np;
 	vector<int> nivel;
 	vector<vector<int> > pnivel;
-	vector<bool> isPacemaker;
+	vector<bool> isPacemaker, isContrarian;
 	int delay;
+	double phaseDif;
 
 	Kakaroto () {}
 
@@ -101,7 +102,7 @@ public:
 		step = _step;
 	}
 
-	Kakaroto (string fn, double _sigma, double _step, int _delay = 0) {
+	Kakaroto (string fn, double _sigma, double _step, int _delay = 0, int stype = 0, int contrarians = 0) {
 		string gr = fn, conf, line;
 		double _theta, _omega, _t0;
 		int size, _np, plo;
@@ -128,6 +129,15 @@ public:
 			file >> tmp;
 			isPacemaker[tmp] = true;
 		}
+		int _nc;
+		file >> _nc;
+		isContrarian.resize(size, false);
+		if (_nc) file >> phaseDif;
+		for (int i = 0; i < _nc; i++) {
+			int tmp;
+			file >> tmp;
+			isContrarian[tmp] = true;
+		}
 		while (file >> _theta >> _omega && theta.size() < size) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
@@ -141,9 +151,15 @@ public:
 		dist2.resize(theta.size());
 		for (int i = 0; i < theta.size(); i++) {
 			dist2[i].resize(theta.size());
+			igraph_vector_t nid;
+			igraph_vector_init (&nid, 0); 
+			igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
+			int adj_sz = igraph_vector_size(&nid);
 			for (int j = 0; j < theta.size(); j++) {
-				dist2[i][j] = 1/_sigma;
+				if (stype == 0) dist2[i][j] = 1/_sigma;
+				else if (stype == 1) dist2[i][j] = 1.0/adj_sz;
 			}
+			igraph_vector_destroy(&nid);
 		}
 		nivel.resize(size, -1);
 		pnivel.resize(size);
@@ -276,7 +292,7 @@ public:
 		queue<int> q;
 		int size = igraph_vcount(&graph);
 		for (int i = 0; i < size; ++i) {
-			if (isPacemaker[i]) {
+			if (isPacemaker[i] || isContrarian[i]) {
 				q.push(i);
 				nivel[i] = 0;
 				pnivel[0].push_back(i);				
@@ -388,7 +404,20 @@ public:
 
 		for (i = 0; i < adj_size; i++) {
 			next = (int)VECTOR(nid)[i];
-			sum += 1/dist2[curr][next]*sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
+			if (!isContrarian[curr])
+			{
+				if (theta[next].size()-1-delay >= 0) {
+					sum += 1/dist2[curr][next] * sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]
+						+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef));
+				}	
+			}
+			else 
+			{
+				if (theta[next].size()-1-delay >= 0 && !isContrarian[next]) {
+					sum += 1/dist2[curr][next] * sin ((theta[next][max(0, (int)(theta[next].size()-1-delay))]
+						+k[next]*coef)-(theta[curr][theta[curr].size()-1]+k[curr]*coef) - phaseDif);
+				}		
+			}
 		}
 		igraph_vector_destroy(&nid);
 		return omega[curr]+sum;
@@ -573,7 +602,7 @@ public:
 				igraph_vector_destroy(&nid);
 			} 
 			for (int j = 0; j < size; ++j) {
-				if (isPacemaker[j]) continue;
+				if (isPacemaker[j] || isContrarian[j]) continue;
 				sf::CircleShape sp(2.0);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
@@ -585,7 +614,7 @@ public:
 			}
 
 			for (int j = 0; j < size; ++j) {
-				if (!isPacemaker[j]) continue;
+				if (!isPacemaker[j] && !isContrarian[j]) continue;
 				sf::CircleShape sp(3.0, 3);
 				double tt = theta[j][i];
 				// sp.setOrigin(2, 2);
