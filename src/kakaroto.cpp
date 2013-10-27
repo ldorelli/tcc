@@ -48,17 +48,18 @@ int main (int argc, char* argv[]) {
 		R += goku.R[i];
 	cerr << "R medio: " << R/(goku.R.size()-200) << endl;
 	cerr << "Angulo final: " << goku.ang.back() << endl;
-	cout << R/(goku.R.size()-200) << endl; 
+	goku.calcVarFreq (var);
+	cout << R/(goku.R.size()-200) << " " << var.back() << endl; 
 	if (which == 1) goku.draw_niveis();
 	else if (which == 2) goku.draw_graph();
 	goku.writeR("../Resultado/waw.r");
-	goku.calcVarFreq (var);
+	
 	ofstream plo;
 	plo.open ("../Resultado/waw.r", std::ofstream::out | std::ofstream::app);
 	Util::printRvector(plo, var, "var");
 	plo.close();
 	
-	goku.faseMediaPorNivel();
+	// goku.faseMediaPorNivel();
 	goku.dumpAll();
 	
 	return 0;

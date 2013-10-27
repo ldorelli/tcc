@@ -17,7 +17,7 @@ using namespace std;
 
 sf::Color RGB_from_freq(double w) {
 	if (fabs (w) > M_PI) {
-		printf ("%lf\n", w);
+		printf ("THROW %lf\n", w);
 		throw -1;
 	}
 	w += M_PI;
@@ -75,6 +75,7 @@ public:
 	vector<vector<int> > pnivel;
 	vector<bool> isPacemaker, isContrarian;
 	int delay;
+	int stype;
 	double phaseDif;
 
 	Kakaroto () {}
@@ -104,6 +105,7 @@ public:
 
 	Kakaroto (string fn, double _sigma, double _step, int _delay = 0, int stype = 0, int contrarians = 0) {
 		string gr = fn, conf, line;
+		this->stype = stype;
 		double _theta, _omega, _t0;
 		int size, _np, plo;
 		ifstream file;
@@ -156,8 +158,7 @@ public:
 			igraph_neighbors(&graph, &nid, i, IGRAPH_IN);				
 			int adj_sz = igraph_vector_size(&nid);
 			for (int j = 0; j < theta.size(); j++) {
-				if (stype == 0) dist2[i][j] = 1/_sigma;
-				else if (stype == 1) dist2[i][j] = 1.0/adj_sz;
+				dist2[i][j] = 1/_sigma;
 			}
 			igraph_vector_destroy(&nid);
 		}
@@ -420,7 +421,8 @@ public:
 			}
 		}
 		igraph_vector_destroy(&nid);
-		return omega[curr]+sum;
+		if (stype == 0) return omega[curr]+sum;
+		else return adj_size+sum;
 	}
 	
 	double f2 (int curr, vector<double> k, double coef) {
@@ -460,7 +462,7 @@ public:
 				ans = theta[i][it-1] + (step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
 				while (ans < -M_PI)	ans += 2*M_PI;
 				while (ans > M_PI)	ans -= 2*M_PI;
-				freq[i].push_back((step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+				freq[i].push_back((1.0/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
 				theta[i].push_back (ans);
 			}
 		}
@@ -530,18 +532,19 @@ public:
 		double mean, var, curr;
 		int n, t, i;
 		ans.resize(theta[0].size());
-		for (t = 0; t < theta[0].size()-1; t++) {
+		for (t = 0; t < freq[0].size(); t++) {
 			mean = 0;
 			n = 0;
-			for (i = 0; i < theta.size(); i++) {
-				mean += dif(theta[i][t+1], theta[i][t]);
+			for (i = 0; i < freq.size(); i++) {
+				mean += freq[i][t];
 				n++;
 			}
 			mean /= n;
 			var = 0;
-			for (i = 0; i < theta.size(); i++) {
-				curr = dif(theta[i][t+1], theta[i][t]);
-
+			for (i = 0; i < freq.size(); i++) {
+				// curr = dif(theta[i][t+1], theta[i][t]);
+				curr = freq[i][t];
+				// cout << curr*(1/step) << endl;
 				var += (curr-mean)*(curr-mean);
 			}
 			ans[t] = var/n;
