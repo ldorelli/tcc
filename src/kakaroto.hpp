@@ -177,6 +177,8 @@ public:
 			isPacemaker[tmp] = true;
 		}
 		while (file >> _theta >> _omega && theta.size() < size) {
+			freq.push_back(vector<double> ());
+			freq[freq.size()-1].push_back(_omega);
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
 			omega.push_back(_omega);
@@ -431,7 +433,7 @@ public:
 				ans = theta[i][it-1] + (step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
 				while (ans < -M_PI)	ans += 2*M_PI;
 				while (ans > M_PI)	ans -= 2*M_PI;
-				freq[i].push_back((step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+				freq[i].push_back((k1[i]+2*k2[i]+2*k3[i]+k4[i])/6);
 				theta[i].push_back (ans);
 			}
 		}
@@ -459,8 +461,8 @@ public:
 		//	cout << r << endl;
 			R.push_back(sqrt(r)/theta.size());
 			ang.push_back(atan2(r2, r1));
-			R1.push_back(r1);
-			R2.push_back(r2);
+			R1.push_back(r1/theta.size());
+			R2.push_back(r2/theta.size());
 		}
 	}
 
@@ -501,21 +503,20 @@ public:
 		double mean, var, curr;
 		int n, t, i;
 		ans.resize(theta[0].size());
-		for (t = 0; t < theta[0].size()-1; t++) {
+		for (t = 0; t < theta[0].size(); t++) {
 			mean = 0;
 			n = 0;
 			for (i = 0; i < theta.size(); i++) {
-				mean += dif(theta[i][t+1], theta[i][t]);
+				mean += freq[i][t];
 				n++;
 			}
 			mean /= n;
 			var = 0;
 			for (i = 0; i < theta.size(); i++) {
-				curr = dif(theta[i][t+1], theta[i][t]);
-
+				curr = freq[i][t];
 				var += (curr-mean)*(curr-mean);
 			}
-			ans[t] = var/n;
+			ans[t] = sqrt(var/n);
 		}
 	}
 
@@ -532,8 +533,10 @@ public:
 			while (window.pollEvent(event))
 			{
 				// "close requested" event: we close the window
-				if (event.type == sf::Event::Closed)
+				if (event.type == sf::Event::Closed) {
 					window.close();
+					return;
+				}
 			}
 			window.clear(sf::Color::Black);
 
@@ -610,12 +613,12 @@ public:
 			window.draw(sp);
 
 			sf::CircleShape med(3.0);
-			med.setPosition(R1[i]-3.0, R2[i]-3.0);
+			med.setPosition(rho*R1[i]-3.0, rho*R2[i]-3.0);
 			med.setFillColor(sf::Color::White);
 			window.draw(med);
 
 			A = sf::Vertex( sf::Vector2f(0, 0) );
-			B = sf::Vertex( sf::Vector2f(R1[i], R2[i]));
+			B = sf::Vertex( sf::Vector2f(rho*R1[i], rho*R2[i]));
 			A.color = sf::Color::White;
 			B.color = sf::Color::White;
 			sf::Vertex lin [] = { A, B };
