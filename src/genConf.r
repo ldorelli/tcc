@@ -1,8 +1,9 @@
-genConfNorm <- function (file, pop, t0, np) {
+genConfNorm <- function (file, pop,  t0, np) {
 	cat (paste(t0, np, sep=' '), file=file, sep="\n")
 	for (i in 1:pop) {
 		x = 0
-		x = rnorm(1, 0, 1)
+		x = rnorm(1, 1.5, 1)
+		x = x 
 		cat (paste(rnorm (1, 0, pi/6), x, sep=' '), file = file, append = TRUE, sep="\n")
 	}
 }

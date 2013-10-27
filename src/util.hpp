@@ -25,7 +25,8 @@ public:
 
 	static void genGraph (int POPULATION, int type, char* param, char* fname) {
 		int g_m;
-		double g_p;
+		double g_p, alpha, beta;
+		char dfn[1024];
 		FILE* outstream;
 		igraph_t graph;
 		switch(type) {
@@ -54,6 +55,15 @@ public:
 				cerr << "SF2ER " << g_m << " " << g_p << endl;
 				Graph::SF2ER(&graph, POPULATION, g_m, g_p, IGRAPH_UNDIRECTED);
 				break;
+			case 6:
+				sscanf (param, "%lf,%lf,%s", &alpha, &beta, dfn);
+				cerr << "Waxman " << alpha << " " << beta << " " << dfn << endl;
+				Graph::Waxman(&graph, POPULATION, alpha, beta, string(dfn), IGRAPH_UNDIRECTED);
+				break;
+			case 7:
+				sscanf (param , "%lf,%lf", &alpha, &beta);
+				cerr << "GeoSF(nao implementado) " << alpha << " " << beta << endl;
+				break;
 			default:
 				fprintf (stderr, "Type %d not defined.\n", type);
 				return;
@@ -73,12 +83,24 @@ public:
 	
 	template <typename T>
 	static void printRvector (ostream &f, const vector<T> &v, const string & varname) {
-		int i;
+		int i = 0;
 		f << varname << " = c(";
 		for (i = 0; i < v.size()-1; i++)	f << v[i] << ", ";
 		f << v[i] << ")" << endl;
 	}
 	
+	template <typename T>
+	static void printRvector (string filename, const vector<T> &v, const string &varname) {
+		ofstream file;
+		file.open(filename.c_str());
+		if (!file.good()) {
+			cerr << "Error: Could not open " << filename << endl;
+			return;
+		}
+		printRvector(file, v, varname);
+		file.close();
+	}
+
 	template <typename T>
 	static void printRvector (const vector<T> &v, const string & varname) {
 		int i;

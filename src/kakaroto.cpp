@@ -16,6 +16,7 @@ using namespace std;
 int main (int argc, char* argv[]) {
 	Kakaroto goku;
 	vector<double> theta, omega, var;
+	int it = 5000;
 	double sigma, step;
 	string fn = "";
 
@@ -53,12 +54,16 @@ int main (int argc, char* argv[]) {
 	if (which == 1) goku.draw_niveis();
 	else if (which == 2) goku.draw_graph();
 	goku.writeR("../Resultado/waw.r");
-	
-	ofstream plo;
-	plo.open ("../Resultado/waw.r", std::ofstream::out | std::ofstream::app);
-	Util::printRvector(plo, var, "var");
-	plo.close();
-	
+	// ofstream plo;
+	// plo.open ("../Resultado/waw.r", std::ofstream::out | std::ofstream::app);
+	// Util::printRvector(plo, var, "var");
+	// plo.close();
+
+	// vector<double> freqs;
+	// for (int  i = 0; i < goku.freq.size(); i++)	freqs.push_back(goku.freq[i][it-1]);
+	// plo.open("../Resultado/freqs.r", std::ofstream::out);
+	// Util::printRvector(plo, freqs, "freqs");
+	// plo.close();
 	// goku.faseMediaPorNivel();
 	goku.dumpAll();
 	

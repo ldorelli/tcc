@@ -20,11 +20,11 @@ def roda (pop, tipo, grau, output):
 		f.flush()
 		subprocess.call(cmd, shell=True, stdout=f)
 		sig += 0.01
-
+	
 tipo = 1
 while tipo != 4:
 	grau = 6
-	while grau != 30:
+	while grau != 18:
 		roda (100, tipo, grau, "../networks/waw.el")
-		grau += 2
+		grau += 6
 	tipo += 1
