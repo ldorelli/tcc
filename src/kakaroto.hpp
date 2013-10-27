@@ -464,11 +464,7 @@ public:
 				ans = theta[i][it-1] + (step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
 				while (ans < -M_PI)	ans += 2*M_PI;
 				while (ans > M_PI)	ans -= 2*M_PI;
-<<<<<<< HEAD
 				freq[i].push_back((1.0/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
-=======
-				freq[i].push_back((k1[i]+2*k2[i]+2*k3[i]+k4[i])/6);
->>>>>>> 2a287a3415a5b10ca6780c7c7ee3df001883712f
 				theta[i].push_back (ans);
 			}
 		}
@@ -538,31 +534,21 @@ public:
 		double mean, var, curr;
 		int n, t, i;
 		ans.resize(theta[0].size());
-<<<<<<< HEAD
+
 		for (t = 0; t < freq[0].size(); t++) {
 			mean = 0;
 			n = 0;
 			for (i = 0; i < freq.size(); i++) {
-=======
-		for (t = 0; t < theta[0].size(); t++) {
-			mean = 0;
-			n = 0;
-			for (i = 0; i < theta.size(); i++) {
->>>>>>> 2a287a3415a5b10ca6780c7c7ee3df001883712f
 				mean += freq[i][t];
 				n++;
 			}
 			mean /= n;
 			var = 0;
-<<<<<<< HEAD
+
 			for (i = 0; i < freq.size(); i++) {
 				// curr = dif(theta[i][t+1], theta[i][t]);
 				curr = freq[i][t];
 				// cout << curr*(1/step) << endl;
-=======
-			for (i = 0; i < theta.size(); i++) {
-				curr = freq[i][t];
->>>>>>> 2a287a3415a5b10ca6780c7c7ee3df001883712f
 				var += (curr-mean)*(curr-mean);
 			}
 			ans[t] = sqrt(var/n);
