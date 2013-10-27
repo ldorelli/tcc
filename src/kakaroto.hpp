@@ -9,6 +9,7 @@
 #include <string>
 #include <queue>
 #include <set>
+#include <sstream>
 #include <SFML/Graphics.hpp>
 #include "util.hpp"
 
@@ -64,7 +65,7 @@ double dif (double a1, double a0) {
 class Kakaroto{
 public:
 	igraph_t graph;
-	vector< vector< double > > theta;
+	vector< vector< double > > theta, freq;
 	vector< double > t;
 	vector<double> omega, R, ang, R1, R2; 
 	vector<vector<double> > dist2;
@@ -82,8 +83,11 @@ public:
 		vector<bool> _isPacemaker, double _step) 
 	{
 		theta.resize(_theta0.size());
-		for (int i = 0; i < _theta0.size(); i++)
+		freq.resize (_theta0.size());
+		for (int i = 0; i < _theta0.size(); i++) {
 			theta[i].push_back(_theta0[i]);
+			freq[i].push_back(_omega[i]);
+		}
 		t.push_back(_t0);
 		omega = _omega;
 		dist2.resize(theta.size());
@@ -127,6 +131,8 @@ public:
 		while (file >> _theta >> _omega && theta.size() < size) {
 			theta.push_back(vector<double> ());
 			theta[theta.size()-1].push_back(_theta);
+			freq.push_back(vector<double> ());
+			freq[freq.size()-1].push_back(_omega);
 			omega.push_back(_omega);
 		}
 		file.close();
@@ -217,6 +223,54 @@ public:
 		}
 	}
 
+	void faseMediaPorNivel ()
+	{
+		printf("Niveis\n");
+		int size = igraph_vcount(&graph);
+		for (int n = 0; n < size; ++n)
+		{
+			if (pnivel[n].size() == 0) continue;
+			double phase = 0.0;
+			double sigma = 0.0;
+			for (int x = 0; x < pnivel[n].size(); ++x)
+			{
+				int i = pnivel[n][x];
+				phase += theta[i][theta[i].size()-1]/pnivel[n].size();
+			}
+			for (int x = 0; x < pnivel[n].size(); ++x)
+			{
+				int i = pnivel[n][x];
+				sigma += pow(theta[i][theta[i].size()-1] - phase, 2);
+			}
+			sigma  = sqrt(sigma/pnivel[n].size());
+			printf("%d %.5lf %.5lf\n", n+1, phase, sigma);
+		}
+	}
+
+	void dumpAll ()
+	{
+		for (int i = 0; i < theta.size(); ++i)
+		{
+			stringstream name;
+			name << "./dump/" << i << ".theta";
+			string st = name.str();
+			ofstream dump(st.c_str(), std::ofstream::out);
+			for (int j = 0; j < theta[i].size(); ++j)
+				dump << 0.0+step*j << " " << theta[i][j] << " " << endl;
+			dump.close();			
+		}
+		for (int i = 0; i < freq.size(); ++i)
+		{
+			stringstream name;
+			name << "./dump/" << i << ".freq";
+			string st = name.str();
+			ofstream dump(st.c_str(), std::ofstream::out);
+			for (int j = 0; j < freq[i].size(); ++j)
+				dump << 0.0+step*j << " " << freq[i][j] << " " << endl;
+			dump.close();			
+		}
+	}	
+
 	void niveis ()
 	{
 		queue<int> q;
@@ -249,7 +303,6 @@ public:
 
 	void draw_niveis ()
 	{
-		niveis();
 		sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
 		sf::View view(
 			sf::Vector2f(0.0, 0.0), 
@@ -378,7 +431,7 @@ public:
 				ans = theta[i][it-1] + (step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
 				while (ans < -M_PI)	ans += 2*M_PI;
 				while (ans > M_PI)	ans -= 2*M_PI;
-
+				freq[i].push_back((step/6.0)*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
 				theta[i].push_back (ans);
 			}
 		}
