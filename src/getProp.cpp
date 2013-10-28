@@ -15,7 +15,7 @@ int main (int argc, char* argv[]) {
 	char *p;
 	igraph_t graph;
 	if (argc < 3) {
-		fprintf (stderr, "Usage: %s <1-filename> <2-properties: 0.<k>; 1.C; 2.<k^2>/<k>; 3.l; 4.connectivity> <3-degree distribution filename>\n", argv[0]);
+		fprintf (stderr, "Usage: %s <1-filename> <2-properties: 0.<k>; 1.C; 2.<k^2>/<k>; 3.l; 4.connectivity; 5.degree; 6.degree dist> <3-degree filename> <4-degree distribution filename>\n", argv[0]);
 		return 1;
 	}
 	Util::readGraph(&graph, argv[1]);
@@ -49,14 +49,22 @@ int main (int argc, char* argv[]) {
 		igraph_bool_t conn;
 		igraph_is_connected(&graph, &conn, IGRAPH_STRONG);
 		cout << "isCon = " << (int)conn << endl;
-	}
-	if (argc > 3) {
+	} if (p[5] == '1') {
 		igraph_vector_t v_deg;
 		vector<double> vDeg;
 		igraph_vector_init(&v_deg, 0);
 		igraph_degree(&graph, &v_deg, igraph_vss_all(), IGRAPH_ALL, 0);
 		Util::makeVector(&v_deg, vDeg);
-		Util::printRvector(string(argv[4]), vDeg, "degree");
+		Util::printRvector(string(argv[3]), vDeg, "degree");
+	} if (p[6]=='1') {
+		igraph_vector_t v_deg;
+		vector<double> vDeg;
+		map<double, double> dDeg;
+		igraph_vector_init(&v_deg, 0);
+		igraph_degree(&graph, &v_deg, igraph_vss_all(), IGRAPH_ALL, 0);
+		Util::makeVector(&v_deg, vDeg);
+		Statistic::getDistribution(vDeg, dDeg);
+		Util::printRmap(string(argv[4]), dDeg, "degdist");
 	}
 	return 0;
 }

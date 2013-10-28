@@ -61,8 +61,9 @@ public:
 				//Graph::Waxman(&graph, POPULATION, alpha, beta, string(dfn), IGRAPH_UNDIRECTED);
 				break;
 			case 7:
-				sscanf (param , "%lf,%lf", &alpha, &beta);
-				cerr << "GeoSF(nao implementado) " << alpha << " " << beta << endl;
+				sscanf (param, "%d,%lf,%lf,%s", &g_m, &alpha, &beta, dfn);
+				cerr << "GeoSF " << g_m << " " << alpha << " " << dfn << endl;
+				Graph::geoSF(&graph, POPULATION, g_m, alpha, beta, string(dfn), IGRAPH_UNDIRECTED);
 				break;
 			default:
 				fprintf (stderr, "Type %d not defined.\n", type);
@@ -127,6 +128,7 @@ public:
 		}
 		cout << "), nrow=2)" << endl;
 	}
+
 	template <typename F, typename S>
 	static void printRmap (ostream &file, map<F, S> &m, const string & varname) {
 		typename map<F, S>::iterator it;
@@ -137,6 +139,18 @@ public:
 			file << it->first << ", " << it->second;
 		}
 		file << "), nrow=2)" << endl;
+	}
+
+	template <typename F, typename S>
+	static void printRmap (string filename, map<F, S> &m, const string &varname) {
+		ofstream file;
+		file.open(filename.c_str());
+		if (!file.good()) {
+			cerr << "Error: Could not open " << filename << endl;
+			return;
+		}
+		printRmap(file, m, varname);
+		file.close();
 	}
 	template <typename T>
 	static void printRmatrixAsVector (const vector<vector<T> > &M, const string & varname) {
