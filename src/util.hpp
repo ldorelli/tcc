@@ -58,7 +58,7 @@ public:
 			case 6:
 				sscanf (param, "%lf,%lf,%s", &alpha, &beta, dfn);
 				cerr << "Waxman " << alpha << " " << beta << " " << dfn << endl;
-				Graph::Waxman(&graph, POPULATION, alpha, beta, string(dfn), IGRAPH_UNDIRECTED);
+				//Graph::Waxman(&graph, POPULATION, alpha, beta, string(dfn), IGRAPH_UNDIRECTED);
 				break;
 			case 7:
 				sscanf (param , "%lf,%lf", &alpha, &beta);

@@ -27,7 +27,7 @@ int main (int argc, char* argv[]) {
 		cout << "<k> = "<< k << endl;
 	} if (p[1] == '1') {
 		igraph_real_t clust;
-		igraph_transitivity_undirected(&graph, &clust);
+		igraph_transitivity_undirected(&graph, &clust, IGRAPH_TRANSITIVITY_ZERO);
 		cout << "C = " << (double) clust << endl;
 	} if (p[2] == '1') {
 		igraph_vector_t v_deg;
